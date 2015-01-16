@@ -1,5 +1,8 @@
 package com.standapp;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -9,6 +12,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -160,15 +164,15 @@ public class MainActivity extends ActionBarActivity {
 
         buildFitnessClient();
         inquireStatusServerLoop();
-        
+
     }
 
     private void inquireStatusServerLoop() {
         final Handler h = new Handler();
         final int delay = 5000; //milliseconds
 
-        h.postDelayed(new Runnable(){
-            public void run(){
+        h.postDelayed(new Runnable() {
+            public void run() {
                 //do something
                 inquireStatusServer();
                 h.postDelayed(this, delay);
@@ -182,28 +186,30 @@ public class MainActivity extends ActionBarActivity {
         // If False, stop the work out
         RequestQueue queue = Volley.newRequestQueue(this);
         String url = SERVER_BASE_URL + "/status";
-        Log.i(TAG, "inquireStatusServer");
+        Log.i(TAG, "Inquiring status of lock screen");
 
         JsonObjectRequest stringRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
                     public void onResponse(JSONObject response) {
-                        Log.i(TAG, "Received response");
+                        Log.i(TAG, "Received response for status");
                         boolean unlocked = false;
                         try {
                             unlocked = response.getBoolean("unlocked");
-                            if (unlocked && stepCounterListenerRegistered){
+                            if (unlocked && stepCounterListenerRegistered) {
+                                Log.i(TAG, "Unregistering step sensor");
                                 // unregister
                                 unregisterFitnessDataListener();
                             } else if (!unlocked && !stepCounterListenerRegistered) {
                                 // register
-                                if (connectedToFitAPI){
-                                    findFitnessDataSources();
-                                } else if (!connectedToFitAPI){
+                                Log.i(TAG, "Registering step sensor");
+                                if (connectedToFitAPI) {
+                                    lockScreen();
+                                } else if (!connectedToFitAPI) {
                                     Log.i(TAG, "Not yet connected to FIT API... Unable to find fitness data sources");
                                 } else if (stepCounterListenerRegistered) {
                                     Log.i(TAG, "Already registered step");
                                 }
-                            } else if (stepCounterListenerRegistered){
+                            } else if (stepCounterListenerRegistered) {
                                 Log.i(TAG, "Already registered step");
                             }
                         } catch (JSONException e) {
@@ -219,6 +225,37 @@ public class MainActivity extends ActionBarActivity {
             }
         });
         queue.add(stringRequest);
+    }
+
+    private void lockScreen() {
+        sendNotificationOfLockedScreen();
+        findFitnessDataSources();
+    }
+
+    private void sendNotificationOfLockedScreen() {
+        // Prepare intent which is triggered if the
+        // notification is selected
+
+        Intent intent = new Intent(this, MainActivity.class);
+        PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
+
+        // Build notification
+        // Actions are just fake
+        Notification noti = new Notification.Builder(this)
+                .setContentTitle("Screen locked!")
+                .setContentText("Start your workout now to unlock screen").setSmallIcon(R.drawable.common_signin_btn_icon_disabled_focus_dark)
+                .setContentIntent(pIntent)
+                .setPriority(Notification.PRIORITY_HIGH)
+                .addAction(R.drawable.ic_plusone_small_off_client, "Ignore", pIntent)
+                .addAction(R.drawable.common_signin_btn_icon_light, "And more", pIntent).build();
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // hide the notification after its selected
+        noti.flags |= Notification.FLAG_AUTO_CANCEL;
+        noti.defaults |= Notification.DEFAULT_SOUND;
+        noti.defaults |= Notification.DEFAULT_VIBRATE;
+
+        Log.i(TAG, "Sent notification");
+        notificationManager.notify(0, noti);
     }
 
     // [END auth_oncreate_setup_ending]
