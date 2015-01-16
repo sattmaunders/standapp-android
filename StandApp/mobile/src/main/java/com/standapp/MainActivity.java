@@ -1,6 +1,8 @@
 package com.standapp;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -12,23 +14,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.fitness.request.OnDataPointListener;
-import com.google.android.gms.gcm.GoogleCloudMessaging;
-
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import android.content.Intent;
-import android.content.IntentSender;
-import android.graphics.Color;
-import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
-import android.view.Menu;
-import android.view.MenuItem;
-
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.Scopes;
@@ -37,10 +29,6 @@ import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.common.api.Status;
-import com.standapp.logger.Log;
-import com.standapp.logger.LogView;
-import com.standapp.logger.LogWrapper;
-import com.standapp.logger.MessageOnlyLogFilter;
 import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.fitness.data.DataPoint;
 import com.google.android.gms.fitness.data.DataSource;
@@ -51,8 +39,16 @@ import com.google.android.gms.fitness.request.DataSourcesRequest;
 import com.google.android.gms.fitness.request.OnDataPointListener;
 import com.google.android.gms.fitness.request.SensorRequest;
 import com.google.android.gms.fitness.result.DataSourcesResult;
+import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.standapp.logger.Log;
+import com.standapp.logger.LogWrapper;
+import com.standapp.logger.MessageOnlyLogFilter;
 
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -61,9 +57,9 @@ public class MainActivity extends ActionBarActivity {
     private static final int REQUEST_OAUTH = 1;
 
     /**
-     *  Track whether an authorization activity is stacking over the current activity, i.e. when
-     *  a known auth error is being resolved, such as showing the account chooser or presenting a
-     *  consent dialog. This avoids common duplications as might happen on screen rotations, etc.
+     * Track whether an authorization activity is stacking over the current activity, i.e. when
+     * a known auth error is being resolved, such as showing the account chooser or presenting a
+     * consent dialog. This avoids common duplications as might happen on screen rotations, etc.
      */
     private static final String AUTH_PENDING = "auth_state_pending";
     private boolean authInProgress = false;
@@ -76,7 +72,6 @@ public class MainActivity extends ActionBarActivity {
     // method in order to stop all sensors from sending data to this listener.
     private OnDataPointListener mListener;
     // [END mListener_variable_reference]
-
 
 
     @Override
@@ -121,7 +116,7 @@ public class MainActivity extends ActionBarActivity {
     /**
      * Tag used on log messages.
      */
-    static final String TAG = "GCM Demo";
+    static final String TAG = "StandApp";
 
     TextView mDisplay;
     GoogleCloudMessaging gcm;
@@ -160,18 +155,44 @@ public class MainActivity extends ActionBarActivity {
         }
 
         buildFitnessClient();
+        inquireStatusServer();
+    }
+
+    private void inquireStatusServer() {
+        // Every 5 sec, we ask server for status
+        // If True, then start workout (step counter)
+        // If False, stop the work out
+        RequestQueue queue = Volley.newRequestQueue(this);
+        String url = "http://ip.jsontest.com/";
+        Log.i(TAG, "inquireStatusServer");
+
+        JsonObjectRequest stringRequest = new JsonObjectRequest(Request.Method.GET, url, null,
+                new Response.Listener<JSONObject>() {
+                    public void onResponse(JSONObject response) {
+                        Log.i(TAG, "Received response");
+                        int a = 4;
+                    }
+
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.i(TAG, "Failed response");
+            }
+        });
+        queue.add(stringRequest);
     }
 
     // [END auth_oncreate_setup_ending]
 
     // [START auth_build_googleapiclient_beginning]
+
     /**
-     *  Build a {@link GoogleApiClient} that will authenticate the user and allow the application
-     *  to connect to Fitness APIs. The scopes included should match the scopes your app needs
-     *  (see documentation for details). Authentication will occasionally fail intentionally,
-     *  and in those cases, there will be a known resolution, which the OnConnectionFailedListener()
-     *  can address. Examples of this include the user never having signed in before, or having
-     *  multiple accounts on the device and needing to specify which account to use, etc.
+     * Build a {@link GoogleApiClient} that will authenticate the user and allow the application
+     * to connect to Fitness APIs. The scopes included should match the scopes your app needs
+     * (see documentation for details). Authentication will occasionally fail intentionally,
+     * and in those cases, there will be a known resolution, which the OnConnectionFailedListener()
+     * can address. Examples of this include the user never having signed in before, or having
+     * multiple accounts on the device and needing to specify which account to use, etc.
      */
     private void buildFitnessClient() {
         // Create the Google API Client
@@ -288,8 +309,8 @@ public class MainActivity extends ActionBarActivity {
      * Find available data sources and attempt to register on a specific {@link DataType}.
      * If the application cares about a data type but doesn't care about the source of the data,
      * this can be skipped entirely, instead calling
-     *     {@link com.google.android.gms.fitness.SensorsApi
-     *     #register(GoogleApiClient, SensorRequest, DataSourceListener)},
+     * {@link com.google.android.gms.fitness.SensorsApi
+     * #register(GoogleApiClient, SensorRequest, DataSourceListener)},
      * where the {@link SensorRequest} contains the desired data type.
      */
     private void findFitnessDataSources() {
@@ -414,7 +435,7 @@ public class MainActivity extends ActionBarActivity {
      * {@code SharedPreferences}.
      *
      * @param context application's context.
-     * @param regId registration ID
+     * @param regId   registration ID
      */
     private void storeRegistrationId(Context context, String regId) {
         final SharedPreferences prefs = getGcmPreferences(context);
@@ -428,11 +449,11 @@ public class MainActivity extends ActionBarActivity {
 
     /**
      * Gets the current registration ID for application on GCM service, if there is one.
-     * <p>
+     * <p/>
      * If result is empty, the app needs to register.
      *
      * @return registration ID, or empty string if there is no existing
-     *         registration ID.
+     * registration ID.
      */
     private String getRegistrationId(Context context) {
         final SharedPreferences prefs = getGcmPreferences(context);
@@ -455,7 +476,7 @@ public class MainActivity extends ActionBarActivity {
 
     /**
      * Registers the application with GCM servers asynchronously.
-     * <p>
+     * <p/>
      * Stores the registration ID and the app versionCode in the application's
      * shared preferences.
      */
@@ -556,6 +577,7 @@ public class MainActivity extends ActionBarActivity {
         return getSharedPreferences(MainActivity.class.getSimpleName(),
                 Context.MODE_PRIVATE);
     }
+
     /**
      * Sends the registration ID to your server over HTTP, so it can use GCM/HTTP or CCS to send
      * messages to your app. Not needed for this demo since the device sends upstream messages
@@ -566,7 +588,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     /**
-     *  Initialize a custom log class that outputs both to in-app targets and logcat.
+     * Initialize a custom log class that outputs both to in-app targets and logcat.
      */
     private void initializeLogging() {
         // Wraps Android's native log framework.
