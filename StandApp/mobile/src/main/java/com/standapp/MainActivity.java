@@ -69,6 +69,7 @@ public class MainActivity extends ActionBarActivity {
      */
     private static final String AUTH_PENDING = "auth_state_pending";
     private boolean authInProgress = false;
+    private boolean isLocked = false;
 
     private GoogleApiClient mClient = null;
     // [END auth_variable_references]
@@ -78,7 +79,7 @@ public class MainActivity extends ActionBarActivity {
     // method in order to stop all sensors from sending data to this listener.
     private OnDataPointListener mListener;
     private boolean connectedToFitAPI = false;
-    private boolean stepCounterListenerRegistered;
+//    private boolean stepCounterListenerRegistered;
     // [END mListener_variable_reference]
 
 
@@ -192,25 +193,23 @@ public class MainActivity extends ActionBarActivity {
                 new Response.Listener<JSONObject>() {
                     public void onResponse(JSONObject response) {
                         Log.i(TAG, "Received response for status");
-                        boolean unlocked = false;
+                        boolean isServerLocked = false;
+
                         try {
-                            unlocked = response.getBoolean("unlocked");
-                            if (unlocked && stepCounterListenerRegistered) {
-                                Log.i(TAG, "Unregistering step sensor");
-                                // unregister
-                                unregisterFitnessDataListener();
-                            } else if (!unlocked && !stepCounterListenerRegistered) {
-                                // register
-                                Log.i(TAG, "Registering step sensor");
-                                if (connectedToFitAPI) {
-                                    lockScreen();
-                                } else if (!connectedToFitAPI) {
-                                    Log.i(TAG, "Not yet connected to FIT API... Unable to find fitness data sources");
-                                } else if (stepCounterListenerRegistered) {
-                                    Log.i(TAG, "Already registered step");
+                            isServerLocked = !response.getBoolean("unlocked");
+
+                            if (isLocked != isServerLocked) {
+                                Log.i(TAG, "Server status has changed to:" + isServerLocked);
+                                isLocked = isServerLocked;
+
+                                if (isLocked) {
+                                    if (connectedToFitAPI) {
+                                        Log.i(TAG, "Queue notifications to watch.");
+                                        lockScreen();
+                                    } else if (!connectedToFitAPI) {
+                                        Log.i(TAG, "Not yet connected to FIT API... Unable to find fitness data sources");
+                                    }
                                 }
-                            } else if (stepCounterListenerRegistered) {
-                                Log.i(TAG, "Already registered step");
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -229,7 +228,6 @@ public class MainActivity extends ActionBarActivity {
 
     private void lockScreen() {
         sendNotificationOfLockedScreen();
-        findFitnessDataSources();
     }
 
     private void sendNotificationOfLockedScreen() {
@@ -289,7 +287,7 @@ public class MainActivity extends ActionBarActivity {
                                 //  What to do? Find some data sources!
 
                                 connectedToFitAPI = true;
-//                                findFitnessDataSources();
+                                findFitnessDataSources();
 
                                 // [START auth_build_googleapiclient_ending]
                             }
@@ -452,10 +450,8 @@ public class MainActivity extends ActionBarActivity {
                     public void onResult(Status status) {
                         if (status.isSuccess()) {
                             Log.i(TAG, "Listener registered!");
-                            stepCounterListenerRegistered = true;
                         } else {
                             Log.i(TAG, "Listener not registered.");
-                            stepCounterListenerRegistered = false;
                         }
                     }
                 });
@@ -504,7 +500,6 @@ public class MainActivity extends ActionBarActivity {
                     public void onResult(Status status) {
                         if (status.isSuccess()) {
                             Log.i(TAG, "Listener was removed!");
-                            stepCounterListenerRegistered = false;
                         } else {
                             Log.i(TAG, "Listener was not removed.");
                         }
