@@ -8,6 +8,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,7 +20,6 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -156,6 +156,21 @@ public class MainActivity extends ActionBarActivity {
 
         buildFitnessClient();
         inquireStatusServer();
+        inquireStatusServerLoop();
+        
+    }
+
+    private void inquireStatusServerLoop() {
+        final Handler h = new Handler();
+        final int delay = 5000; //milliseconds
+
+        h.postDelayed(new Runnable(){
+            public void run(){
+                //do something
+                inquireStatusServer();
+                h.postDelayed(this, delay);
+            }
+        }, delay);
     }
 
     private void inquireStatusServer() {
@@ -170,7 +185,6 @@ public class MainActivity extends ActionBarActivity {
                 new Response.Listener<JSONObject>() {
                     public void onResponse(JSONObject response) {
                         Log.i(TAG, "Received response");
-                        int a = 4;
                     }
 
                 }, new Response.ErrorListener() {
