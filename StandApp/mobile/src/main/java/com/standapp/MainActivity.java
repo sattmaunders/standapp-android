@@ -70,6 +70,7 @@ public class MainActivity extends ActionBarActivity {
     private static final String AUTH_PENDING = "auth_state_pending";
     private boolean authInProgress = false;
     private boolean isLocked = false;
+    private boolean isAway = false;
 
     private GoogleApiClient mClient = null;
     // [END auth_variable_references]
@@ -194,11 +195,23 @@ public class MainActivity extends ActionBarActivity {
                     public void onResponse(JSONObject response) {
                         Log.i(TAG, "Received response for status");
                         boolean isServerLocked = false;
+                        boolean isServerAway = false;
 
                         try {
                             isServerLocked = !response.getBoolean("unlocked");
+                            isServerAway = response.getBoolean("away");
 
-                            if (isLocked != isServerLocked) {
+                            if(isAway != isServerAway) {
+                                Log.i(TAG, "Server away status has been changed to:" + isServerAway);
+                                isAway = isServerAway;
+
+                                if (isAway) {
+                                    // Sending notification to phone with options
+                                    askUserToLockScreen();
+                                }
+                            }
+
+                            if (isLocked != isServerLocked && !isAway) {
                                 Log.i(TAG, "Server status has changed to:" + isServerLocked);
                                 isLocked = isServerLocked;
 
@@ -252,8 +265,34 @@ public class MainActivity extends ActionBarActivity {
         noti.defaults |= Notification.DEFAULT_SOUND;
         noti.defaults |= Notification.DEFAULT_VIBRATE;
 
-        Log.i(TAG, "Sent notification");
+        Log.i(TAG, "Sent notification that screen is locked");
         notificationManager.notify(0, noti);
+    }
+
+    private void askUserToLockScreen() {
+        // Prepare intent which is triggered if the
+        // notification is selected
+
+        Intent intent = new Intent(this, MainActivity.class);
+        PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
+
+        // Build notification
+        // Actions are just fake
+        Notification noti = new Notification.Builder(this)
+                .setContentTitle("Leaving your computer?")
+                .setContentText("Would you like to lock your computer.").setSmallIcon(R.drawable.ic_launcher)
+                .setContentIntent(pIntent)
+                .setPriority(Notification.PRIORITY_HIGH)
+                .addAction(R.drawable.ic_plusone_small_off_client, "Yes", pIntent)
+                .addAction(R.drawable.common_signin_btn_icon_light, "No", pIntent).build();
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // hide the notification after its selected
+        noti.flags |= Notification.FLAG_AUTO_CANCEL;
+        noti.defaults |= Notification.DEFAULT_SOUND;
+        noti.defaults |= Notification.DEFAULT_VIBRATE;
+
+        Log.i(TAG, "Asked user to lock screen.");
+        notificationManager.notify(1, noti);
     }
 
     // [END auth_oncreate_setup_ending]
