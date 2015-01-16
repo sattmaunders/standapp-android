@@ -44,6 +44,7 @@ import com.standapp.logger.Log;
 import com.standapp.logger.LogWrapper;
 import com.standapp.logger.MessageOnlyLogFilter;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -55,6 +56,7 @@ public class MainActivity extends ActionBarActivity {
 
     // [START auth_variable_references]
     private static final int REQUEST_OAUTH = 1;
+    private static final String SERVER_BASE_URL = "http://standapp-2015.herokuapp.com";
 
     /**
      * Track whether an authorization activity is stacking over the current activity, i.e. when
@@ -71,6 +73,8 @@ public class MainActivity extends ActionBarActivity {
     // Need to hold a reference to this listener, as it's passed into the "unregister"
     // method in order to stop all sensors from sending data to this listener.
     private OnDataPointListener mListener;
+    private boolean connectedToFitAPI = false;
+    private boolean stepCounterListenerRegistered;
     // [END mListener_variable_reference]
 
 
@@ -155,7 +159,6 @@ public class MainActivity extends ActionBarActivity {
         }
 
         buildFitnessClient();
-        inquireStatusServer();
         inquireStatusServerLoop();
         
     }
@@ -178,13 +181,35 @@ public class MainActivity extends ActionBarActivity {
         // If True, then start workout (step counter)
         // If False, stop the work out
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url = "http://ip.jsontest.com/";
+        String url = SERVER_BASE_URL + "/status";
         Log.i(TAG, "inquireStatusServer");
 
         JsonObjectRequest stringRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
                     public void onResponse(JSONObject response) {
                         Log.i(TAG, "Received response");
+                        boolean unlocked = false;
+                        try {
+                            unlocked = response.getBoolean("unlocked");
+                            if (unlocked && stepCounterListenerRegistered){
+                                // unregister
+                                unregisterFitnessDataListener();
+                            } else if (!unlocked && !stepCounterListenerRegistered) {
+                                // register
+                                if (connectedToFitAPI){
+                                    findFitnessDataSources();
+                                } else if (!connectedToFitAPI){
+                                    Log.i(TAG, "Not yet connected to FIT API... Unable to find fitness data sources");
+                                } else if (stepCounterListenerRegistered) {
+                                    Log.i(TAG, "Already registered step");
+                                }
+                            } else if (stepCounterListenerRegistered){
+                                Log.i(TAG, "Already registered step");
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
                     }
 
                 }, new Response.ErrorListener() {
@@ -225,7 +250,9 @@ public class MainActivity extends ActionBarActivity {
                                 // Put application specific code here.
                                 // [END auth_build_googleapiclient_beginning]
                                 //  What to do? Find some data sources!
-                                findFitnessDataSources();
+
+                                connectedToFitAPI = true;
+//                                findFitnessDataSources();
 
                                 // [START auth_build_googleapiclient_ending]
                             }
@@ -369,6 +396,8 @@ public class MainActivity extends ActionBarActivity {
                     Value val = dataPoint.getValue(field);
                     Log.i(TAG, "Detected DataPoint field: " + field.getName());
                     Log.i(TAG, "Detected DataPoint value: " + val);
+
+                    sendStepsToServer(val);
                 }
             }
         };
@@ -378,7 +407,7 @@ public class MainActivity extends ActionBarActivity {
                 new SensorRequest.Builder()
                         .setDataSource(dataSource) // Optional but recommended for custom data sets.
                         .setDataType(dataType) // Can't be omitted.
-                        .setSamplingRate(2, TimeUnit.SECONDS)
+                        .setSamplingRate(3, TimeUnit.SECONDS)
                         .build(),
                 mListener)
                 .setResultCallback(new ResultCallback<Status>() {
@@ -386,12 +415,34 @@ public class MainActivity extends ActionBarActivity {
                     public void onResult(Status status) {
                         if (status.isSuccess()) {
                             Log.i(TAG, "Listener registered!");
+                            stepCounterListenerRegistered = true;
                         } else {
                             Log.i(TAG, "Listener not registered.");
+                            stepCounterListenerRegistered = false;
                         }
                     }
                 });
         // [END register_data_listener]
+    }
+
+    private void sendStepsToServer(final Value val) {
+        RequestQueue queue = Volley.newRequestQueue(this);
+        String url = SERVER_BASE_URL + "/steps/" + val.toString();
+        Log.i(TAG, "Sending steps to server");
+
+        JsonObjectRequest stringRequest = new JsonObjectRequest(Request.Method.GET, url, null,
+                new Response.Listener<JSONObject>() {
+                    public void onResponse(JSONObject response) {
+                        Log.i(TAG, "Send steps to server " + val.toString());
+                    }
+
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.i(TAG, "Failed response");
+            }
+        });
+        queue.add(stringRequest);
     }
 
     /**
@@ -416,6 +467,7 @@ public class MainActivity extends ActionBarActivity {
                     public void onResult(Status status) {
                         if (status.isSuccess()) {
                             Log.i(TAG, "Listener was removed!");
+                            stepCounterListenerRegistered = false;
                         } else {
                             Log.i(TAG, "Listener was not removed.");
                         }
