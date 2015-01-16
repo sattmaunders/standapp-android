@@ -60,7 +60,7 @@ public class MainActivity extends ActionBarActivity {
 
     // [START auth_variable_references]
     private static final int REQUEST_OAUTH = 1;
-    private static final String SERVER_BASE_URL = "http://standapp-2015.herokuapp.com";
+    public static final String SERVER_BASE_URL = "http://standapp-2015.herokuapp.com";
 
     /**
      * Track whether an authorization activity is stacking over the current activity, i.e. when
@@ -248,6 +248,7 @@ public class MainActivity extends ActionBarActivity {
         // notification is selected
 
         Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("doLock", true);
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
 
         // Build notification
@@ -273,18 +274,21 @@ public class MainActivity extends ActionBarActivity {
         // Prepare intent which is triggered if the
         // notification is selected
 
-        Intent intent = new Intent(this, MainActivity.class);
-        PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
+        Intent intentMainActivity = new Intent(this, MainActivity.class);
+        PendingIntent pIntentMainActivity = PendingIntent.getActivity(this, 0, intentMainActivity, 0);
+
+        Intent intent = new Intent(this, LockScreenActivity.class);
+        PendingIntent lockScreenActivity = PendingIntent.getActivity(this, 0, intent, 0);
 
         // Build notification
         // Actions are just fake
         Notification noti = new Notification.Builder(this)
                 .setContentTitle("Leaving your computer?")
                 .setContentText("Would you like to lock your computer.").setSmallIcon(R.drawable.ic_launcher)
-                .setContentIntent(pIntent)
+                .setContentIntent(lockScreenActivity)
                 .setPriority(Notification.PRIORITY_HIGH)
-                .addAction(R.drawable.ic_plusone_small_off_client, "Yes", pIntent)
-                .addAction(R.drawable.common_signin_btn_icon_light, "No", pIntent).build();
+                .addAction(R.drawable.ic_plusone_small_off_client, "Yes", lockScreenActivity)
+                .addAction(R.drawable.common_signin_btn_icon_light, "No", pIntentMainActivity).build();
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         // hide the notification after its selected
         noti.flags |= Notification.FLAG_AUTO_CANCEL;

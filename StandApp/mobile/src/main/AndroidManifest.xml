@@ -43,6 +43,13 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".LockScreenActivity"
+            android:label="LockScreen">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
+        </activity>
+
     </application>
 
 </manifest>
