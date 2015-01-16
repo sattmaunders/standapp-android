@@ -29,7 +29,7 @@ public class LockScreenActivity extends ActionBarActivity {
 
     private void lockScreenViaHTTP() {
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url = MainActivity.SERVER_BASE_URL + "/lock/timeout"; // TODO change to away
+        String url = MainActivity.SERVER_BASE_URL + "/lock/away";
         Log.i(MainActivity.TAG, "locking screen");
 
         JsonObjectRequest stringRequest = new JsonObjectRequest(Request.Method.GET, url, null,

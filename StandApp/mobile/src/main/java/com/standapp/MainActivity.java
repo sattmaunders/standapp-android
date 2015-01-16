@@ -70,6 +70,7 @@ public class MainActivity extends ActionBarActivity {
     private static final String AUTH_PENDING = "auth_state_pending";
     private boolean authInProgress = false;
     private boolean isLocked = false;
+    private boolean isReady = false;
     private boolean isAway = false;
 
     private GoogleApiClient mClient = null;
@@ -196,10 +197,12 @@ public class MainActivity extends ActionBarActivity {
                         Log.i(TAG, "Received response for status");
                         boolean isServerLocked = false;
                         boolean isServerAway = false;
+                        boolean isServerReady = false;
 
                         try {
                             isServerLocked = !response.getBoolean("unlocked");
                             isServerAway = response.getBoolean("away");
+                            isServerReady = response.getBoolean("readyToUnlock");
 
                             if(isAway != isServerAway) {
                                 Log.i(TAG, "Server away status has been changed to:" + isServerAway);
@@ -224,6 +227,16 @@ public class MainActivity extends ActionBarActivity {
                                     }
                                 }
                             }
+
+                            if (isReady != isServerReady  && isLocked){
+                                isReady = isServerReady;
+
+                                if (isReady){
+                                    Log.i(TAG, "User is ready to unlock screen");
+                                    tellUserHeCanGoBackToDesk();
+                                }
+                            }
+
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -237,6 +250,26 @@ public class MainActivity extends ActionBarActivity {
             }
         });
         queue.add(stringRequest);
+    }
+
+    private void tellUserHeCanGoBackToDesk() {
+        Intent intent = new Intent(this, MainActivity.class);
+        PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
+
+        Notification noti = new Notification.Builder(this)
+                .setContentTitle("Mission Accomplished")
+                .setContentText("You can go back to your desktop").setSmallIcon(R.drawable.abc_ic_ab_back_mtrl_am_alpha)
+                .setContentIntent(pIntent)
+                .setPriority(Notification.PRIORITY_HIGH)
+                .build();
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // hide the notification after its selected
+        noti.flags |= Notification.FLAG_AUTO_CANCEL;
+        noti.defaults |= Notification.DEFAULT_SOUND;
+        noti.defaults |= Notification.DEFAULT_VIBRATE;
+
+        Log.i(TAG, "Sent notification to indicate the user can go back to desktop");
+        notificationManager.notify(0, noti);
     }
 
     private void lockScreen() {
