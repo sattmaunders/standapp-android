@@ -258,7 +258,7 @@ public class MainActivity extends ActionBarActivity {
 
         Notification noti = new Notification.Builder(this)
                 .setContentTitle("Mission Accomplished")
-                .setContentText("You can go back to your desktop").setSmallIcon(R.drawable.abc_ic_ab_back_mtrl_am_alpha)
+                .setContentText("You can go back to your desktop").setSmallIcon(R.drawable.ic_mission_accomplished)
                 .setContentIntent(pIntent)
                 .setPriority(Notification.PRIORITY_HIGH)
                 .build();
@@ -288,11 +288,11 @@ public class MainActivity extends ActionBarActivity {
         // Actions are just fake
         Notification noti = new Notification.Builder(this)
                 .setContentTitle("Screen locked!")
-                .setContentText("Start your workout now to unlock screen").setSmallIcon(R.drawable.common_signin_btn_icon_disabled_focus_dark)
+                .setContentText("Start your workout now to unlock screen").setSmallIcon(R.drawable.ic_exercise)
                 .setContentIntent(pIntent)
                 .setPriority(Notification.PRIORITY_HIGH)
-                .addAction(R.drawable.ic_plusone_small_off_client, "Ignore", pIntent)
-                .addAction(R.drawable.common_signin_btn_icon_light, "And more", pIntent).build();
+                .addAction(R.drawable.ic_no, "Ignore", pIntent).build();
+//        noti.contentView.setImageViewResource(android.R.id.icon, R.drawable.ic_exercise);
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         // hide the notification after its selected
         noti.flags |= Notification.FLAG_AUTO_CANCEL;
@@ -317,11 +317,11 @@ public class MainActivity extends ActionBarActivity {
         // Actions are just fake
         Notification noti = new Notification.Builder(this)
                 .setContentTitle("Leaving your computer?")
-                .setContentText("Would you like to lock your computer.").setSmallIcon(R.drawable.ic_launcher)
+                .setContentText("Would you like to lock your computer.").setSmallIcon(R.drawable.ic_exercise)
                 .setContentIntent(lockScreenActivity)
                 .setPriority(Notification.PRIORITY_HIGH)
-                .addAction(R.drawable.ic_plusone_small_off_client, "Yes", lockScreenActivity)
-                .addAction(R.drawable.common_signin_btn_icon_light, "No", pIntentMainActivity).build();
+                .addAction(R.drawable.ic_yes, "Yes", lockScreenActivity)
+                .addAction(R.drawable.ic_no, "No", pIntentMainActivity).build();
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         // hide the notification after its selected
         noti.flags |= Notification.FLAG_AUTO_CANCEL;
