@@ -214,6 +214,15 @@ public class MainActivity extends ActionBarActivity {
                                 }
                             }
 
+                            if (isReady != isServerReady  && isLocked){
+                                isReady = isServerReady;
+
+                                if (isReady){
+                                    Log.i(TAG, "User is ready to unlock screen");
+                                    tellUserHeCanGoBackToDesk();
+                                }
+                            }
+
                             if (isLocked != isServerLocked && !isAway) {
                                 Log.i(TAG, "Server status has changed to:" + isServerLocked);
                                 isLocked = isServerLocked;
@@ -225,15 +234,6 @@ public class MainActivity extends ActionBarActivity {
                                     } else if (!connectedToFitAPI) {
                                         Log.i(TAG, "Not yet connected to FIT API... Unable to find fitness data sources");
                                     }
-                                }
-                            }
-
-                            if (isReady != isServerReady  && isLocked){
-                                isReady = isServerReady;
-
-                                if (isReady){
-                                    Log.i(TAG, "User is ready to unlock screen");
-                                    tellUserHeCanGoBackToDesk();
                                 }
                             }
 
