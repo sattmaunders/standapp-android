@@ -57,6 +57,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+
 
 public class MainActivity extends StandAppBaseActionBarActivity {
 
@@ -131,7 +134,9 @@ public class MainActivity extends StandAppBaseActionBarActivity {
      */
     static final String TAG = "StandApp";
 
+    @InjectView(R.id.display)
     TextView mDisplay;
+
     GoogleCloudMessaging gcm;
     AtomicInteger msgId = new AtomicInteger();
     Context context;
@@ -146,7 +151,7 @@ public class MainActivity extends StandAppBaseActionBarActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-        mDisplay = (TextView) findViewById(R.id.display);
+        ButterKnife.inject(this);
 
         context = getApplicationContext();
 
