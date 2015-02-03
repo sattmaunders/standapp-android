@@ -44,6 +44,7 @@ import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.standapp.activity.StandAppBaseActionBarActivity;
 import com.standapp.backend.BackendServer;
+import com.standapp.google.GooglePlayServicesHelper;
 import com.standapp.logger.Log;
 import com.standapp.logger.LogWrapper;
 import com.standapp.logger.MessageOnlyLogFilter;
@@ -86,6 +87,8 @@ public class MainActivity extends StandAppBaseActionBarActivity {
     // method in order to stop all sensors from sending data to this listener.
     private OnDataPointListener mListener;
     private boolean connectedToFitAPI = false;
+
+
 //    private boolean stepCounterListenerRegistered;
     // [END mListener_variable_reference]
 
@@ -146,6 +149,9 @@ public class MainActivity extends StandAppBaseActionBarActivity {
     @Inject
     BackendServer backendServer;
 
+    @Inject
+    GooglePlayServicesHelper googlePlayServicesHelper;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -156,7 +162,7 @@ public class MainActivity extends StandAppBaseActionBarActivity {
         context = getApplicationContext();
 
         // Check device for Play Services APK. If check succeeds, proceed with GCM registration.
-        if (checkPlayServices()) {
+        if (googlePlayServicesHelper.checkPlayServices(this)) {
             gcm = GoogleCloudMessaging.getInstance(this);
             regid = getRegistrationId(context);
 
@@ -432,7 +438,7 @@ public class MainActivity extends StandAppBaseActionBarActivity {
     protected void onResume() {
         super.onResume();
         // Check device for Play Services APK.
-        checkPlayServices();
+        googlePlayServicesHelper.checkPlayServices(this);
     }
 
     // [START auth_connection_flow_in_activity_lifecycle_methods]
@@ -597,26 +603,6 @@ public class MainActivity extends StandAppBaseActionBarActivity {
                     }
                 });
         // [END unregister_data_listener]
-    }
-
-    /**
-     * Check the device to make sure it has the Google Play Services APK. If
-     * it doesn't, display a dialog that allows users to download the APK from
-     * the Google Play Store or enable it in the device's system settings.
-     */
-    private boolean checkPlayServices() {
-        int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
-        if (resultCode != ConnectionResult.SUCCESS) {
-            if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-                GooglePlayServicesUtil.getErrorDialog(resultCode, this,
-                        PLAY_SERVICES_RESOLUTION_REQUEST).show();
-            } else {
-                Log.i(TAG, "This device is not supported.");
-                finish();
-            }
-            return false;
-        }
-        return true;
     }
 
     /**

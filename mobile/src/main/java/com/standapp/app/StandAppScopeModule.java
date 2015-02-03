@@ -11,6 +11,7 @@ import com.standapp.annotations.GCMSenderID;
 import com.standapp.backend.BackendServer;
 import com.standapp.common.AndroidAppModule;
 import com.standapp.common.ForApplication;
+import com.standapp.google.GooglePlayServicesHelper;
 
 import dagger.Module;
 import dagger.Provides;
@@ -39,6 +40,11 @@ public class StandAppScopeModule {
     BackendServer provideBackendServer(@ForApplication Context context) {
         BackendServer backendServer = new BackendServer(context);
         return backendServer;
+    }
+
+    @Provides
+    GooglePlayServicesHelper provideGooglePlayServicesHelper() {
+        return new GooglePlayServicesHelper();
     }
 
 //    @Provides
