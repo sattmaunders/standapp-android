@@ -80,7 +80,7 @@ public class BackendServer {
                 Log.d(LogConstants.LOG_ID, "Failed response");
             }
         };
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, "http://google.ca", null, successListener, errorListener);
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, "http://ip.jsontest.com/", null, successListener, errorListener);
         requestQueue.add(request);
 
     }

@@ -170,7 +170,7 @@ public class MainActivity extends StandAppBaseActionBarActivity {
 
         buildFitnessClient();
 //        inquireStatusServerLoop();
-//        doSomethingCool();
+        doSomethingCool();
 
     }
 

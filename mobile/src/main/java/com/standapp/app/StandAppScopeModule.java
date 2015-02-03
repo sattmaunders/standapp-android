@@ -4,8 +4,13 @@ package com.standapp.app;
  * Created by John on 2/2/2015.
  */
 
+import android.content.Context;
+
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.Volley;
 import com.standapp.annotations.GCMSenderID;
 import com.standapp.common.AndroidAppModule;
+import com.standapp.common.ForApplication;
 
 import dagger.Module;
 import dagger.Provides;
@@ -30,13 +35,6 @@ public class StandAppScopeModule {
     }
 
 
-
-
-//    @Provides
-//    RequestQueue provideRequestQueue(@ForApplication Context context) {
-//        RequestQueue requestQueue = Volley.newRequestQueue(context);
-//        return requestQueue;
-//    }
 
 
 

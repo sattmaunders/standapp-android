@@ -7,6 +7,8 @@ package com.standapp.activity;
 import android.app.Activity;
 import android.content.Context;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.Volley;
 import com.standapp.MainActivity;
 import com.standapp.app.StandAppScopeModule;
 import com.standapp.backend.BackendServer;
@@ -58,8 +60,8 @@ public class ActivityScopeModule {
     }
 
     @Provides
-    BackendServer provideBackendServer(@ForApplication Context context) {
-        BackendServer backendServer = new BackendServer(context);
+    BackendServer provideBackendServer(RequestQueue requestQueue) {
+        BackendServer backendServer = new BackendServer(requestQueue);
         return backendServer;
     }
 
@@ -67,6 +69,13 @@ public class ActivityScopeModule {
     GooglePlayServicesHelper provideGooglePlayServicesHelper() {
         return new GooglePlayServicesHelper();
     }
+
+    @Provides
+    RequestQueue provideRequestQueue(@ForApplication Context context) {
+        RequestQueue requestQueue = Volley.newRequestQueue(context);
+        return requestQueue;
+    }
+
 
 
 
