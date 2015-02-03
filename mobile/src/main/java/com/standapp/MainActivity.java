@@ -12,8 +12,6 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.NotificationCompat;
-import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,6 +42,8 @@ import com.google.android.gms.fitness.request.OnDataPointListener;
 import com.google.android.gms.fitness.request.SensorRequest;
 import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.standapp.activity.StandAppBaseActionBarActivity;
+import com.standapp.backend.BackendServer;
 import com.standapp.logger.Log;
 import com.standapp.logger.LogWrapper;
 import com.standapp.logger.MessageOnlyLogFilter;
@@ -55,8 +55,10 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.inject.Inject;
 
-public class MainActivity extends ActionBarActivity {
+
+public class MainActivity extends StandAppBaseActionBarActivity {
 
     // [START auth_variable_references]
     private static final int REQUEST_OAUTH = 1;
@@ -136,6 +138,9 @@ public class MainActivity extends ActionBarActivity {
 
     String regid;
 
+    @Inject
+    BackendServer backendServer;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -166,8 +171,13 @@ public class MainActivity extends ActionBarActivity {
         }
 
         buildFitnessClient();
-        inquireStatusServerLoop();
+//        inquireStatusServerLoop();
+        doSomethingCool();
 
+    }
+
+    private void doSomethingCool() {
+        backendServer.doSomethingCool();
     }
 
     private void inquireStatusServerLoop() {
