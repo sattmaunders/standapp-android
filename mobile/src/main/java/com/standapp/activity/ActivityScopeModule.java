@@ -17,6 +17,7 @@ import com.standapp.common.ForApplication;
 import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.GooglePlayServicesHelper;
 import com.standapp.preferences.PreferenceAccess;
+import com.standapp.util.UserInfo;
 
 import javax.inject.Singleton;
 
@@ -56,8 +57,8 @@ public class ActivityScopeModule {
     }
 
     @Provides
-    GCMHelper provideGCMHelper(PreferenceAccess preferenceAccess, Activity activity, BackendServer backendServer) {
-        return new GCMHelper(preferenceAccess, activity, backendServer);
+    GCMHelper provideGCMHelper(PreferenceAccess preferenceAccess, Activity activity, BackendServer backendServer, UserInfo userInfo) {
+        return new GCMHelper(preferenceAccess, activity, backendServer, userInfo);
     }
 
     @Provides

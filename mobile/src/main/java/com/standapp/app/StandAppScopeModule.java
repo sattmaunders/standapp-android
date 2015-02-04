@@ -6,11 +6,10 @@ package com.standapp.app;
 
 import android.content.Context;
 
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.Volley;
 import com.standapp.annotations.GCMSenderID;
 import com.standapp.common.AndroidAppModule;
 import com.standapp.common.ForApplication;
+import com.standapp.util.UserInfo;
 
 import dagger.Module;
 import dagger.Provides;
@@ -34,8 +33,9 @@ public class StandAppScopeModule {
         return "Injected: senderID";
     }
 
-
-
-
+    @Provides
+    UserInfo provideUserInfo(@ForApplication Context context){
+        return new UserInfo(context);
+    }
 
 }

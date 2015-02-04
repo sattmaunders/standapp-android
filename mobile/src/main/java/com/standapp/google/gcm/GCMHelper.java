@@ -14,6 +14,7 @@ import com.standapp.util.AppInfo;
 import com.standapp.logger.Log;
 import com.standapp.logger.LogConstants;
 import com.standapp.preferences.PreferenceAccess;
+import com.standapp.util.UserInfo;
 
 import org.json.JSONObject;
 
@@ -36,6 +37,7 @@ public class GCMHelper {
     private PreferenceAccess preferenceAccess;
     private Activity activity;
     private BackendServer backendServer;
+    private UserInfo userInfo;
 
     /**
      * Substitute you own sender ID here. This is the project number you got
@@ -44,10 +46,11 @@ public class GCMHelper {
     private String SENDER_ID = "665143645608";
     private AtomicInteger msgId = new AtomicInteger();
 
-    public GCMHelper(PreferenceAccess preferenceAccess, Activity activity, BackendServer backendServer) {
+    public GCMHelper(PreferenceAccess preferenceAccess, Activity activity, BackendServer backendServer, UserInfo userInfo) {
         this.preferenceAccess = preferenceAccess;
         this.activity = activity;
         this.backendServer = backendServer;
+        this.userInfo = userInfo;
     }
 
     public void registerDevice(final TextView display) {
@@ -179,7 +182,7 @@ public class GCMHelper {
         };
 
 
-        backendServer.registerDevice(regid, null, successListener, errorListener);
+        backendServer.registerDevice(regid, userInfo.getUserId(), successListener, errorListener);
     }
 
 
