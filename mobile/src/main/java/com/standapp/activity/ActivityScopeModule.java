@@ -16,6 +16,7 @@ import com.standapp.common.ForActivity;
 import com.standapp.common.ForApplication;
 import com.standapp.google.GCMHelper;
 import com.standapp.google.GooglePlayServicesHelper;
+import com.standapp.preferences.PreferenceAccess;
 
 import javax.inject.Singleton;
 
@@ -55,8 +56,8 @@ public class ActivityScopeModule {
     }
 
     @Provides
-    GCMHelper provideGCMHelper(Activity activity) {
-        return new GCMHelper(activity);
+    GCMHelper provideGCMHelper(PreferenceAccess preferenceAccess, Activity activity, BackendServer backendServer) {
+        return new GCMHelper(preferenceAccess, activity, backendServer);
     }
 
     @Provides
@@ -76,6 +77,13 @@ public class ActivityScopeModule {
     RequestQueue provideRequestQueue(@ForApplication Context context) {
         RequestQueue requestQueue = Volley.newRequestQueue(context);
         return requestQueue;
+    }
+
+    @Provides
+    @Singleton
+    PreferenceAccess providePreferenceAccess(Activity activity) {
+        PreferenceAccess pa = new PreferenceAccess(activity);
+        return pa;
     }
 
 

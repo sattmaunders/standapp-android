@@ -155,7 +155,7 @@ public class MainActivity extends StandAppBaseActionBarActivity {
 
         // Check device for Play Services APK. If check succeeds, proceed with GCM registration.
         if (googlePlayServicesHelper.checkPlayServices(this)) {
-            gcmHelper.init();
+            gcmHelper.registerDevice(mDisplay);
         } else {
             Log.i(TAG, "No valid Google Play Services APK found.");
         }
