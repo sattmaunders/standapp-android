@@ -7,6 +7,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.widget.TextView;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.standapp.MainActivity;
@@ -40,7 +41,7 @@ public class GCMHelper {
         this.activity = activity;
     }
 
-    public AsyncTask<Void, Void, String> getAsyncTaskSendGCMMessage(){
+    public AsyncTask<Void, Void, String> getAsyncTaskSendGCMMessage(final TextView mDisplay) {
         return new AsyncTask<Void, Void, String>() {
             @Override
             protected String doInBackground(Void... params) {
@@ -62,12 +63,12 @@ public class GCMHelper {
             protected void onPostExecute(String msg) {
                 int a = 4;
                 Log.i(LogConstants.LOG_ID, msg);
-//            mDisplay.append(msg + "\n");
+                mDisplay.append(msg + "\n");
             }
         };
     }
 
-    public void init(){
+    public void init() {
 
         gcm = GoogleCloudMessaging.getInstance(activity);
         regid = getRegistrationId(activity);
@@ -198,8 +199,6 @@ public class GCMHelper {
         editor.putInt(PROPERTY_APP_VERSION, appVersion);
         editor.commit();
     }
-
-
 
 
 }

@@ -593,15 +593,10 @@ public class MainActivity extends StandAppBaseActionBarActivity {
     }
 
 
-
-
-
     // Send an upstream message.
     public void onClick(final View view) {
-
         if (view == findViewById(R.id.send)) {
-
-            gcmHelper.getAsyncTaskSendGCMMessage().execute(null, null, null);
+            gcmHelper.getAsyncTaskSendGCMMessage(mDisplay).execute(null, null, null);
         } else if (view == findViewById(R.id.clear)) {
             mDisplay.setText("");
         }

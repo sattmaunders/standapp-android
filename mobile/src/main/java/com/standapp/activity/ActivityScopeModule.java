@@ -26,7 +26,7 @@ import dagger.Provides;
  * Here it provides the dependencies those have same lifetime of one activity in your StandApp
  */
 @Module(
-        complete = false,    // Here we enable object graph validation
+        complete = true,    // Here we enable object graph validation
         library = true,
         addsTo = StandAppScopeModule.class, // Important for object graph validation at compile time
         injects = {
@@ -60,12 +60,14 @@ public class ActivityScopeModule {
     }
 
     @Provides
+    @Singleton
     BackendServer provideBackendServer(RequestQueue requestQueue) {
         BackendServer backendServer = new BackendServer(requestQueue);
         return backendServer;
     }
 
     @Provides
+    @Singleton
     GooglePlayServicesHelper provideGooglePlayServicesHelper() {
         return new GooglePlayServicesHelper();
     }

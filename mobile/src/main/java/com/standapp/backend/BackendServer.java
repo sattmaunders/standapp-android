@@ -1,13 +1,10 @@
 package com.standapp.backend;
 
-import android.content.Context;
-
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.standapp.logger.Log;
 import com.standapp.logger.LogConstants;
 
@@ -26,12 +23,7 @@ public class BackendServer {
     private static final String REST_WORKOUT_START = "workout/start";
     private static final String REST_WORKOUT_END = "workout/end";
 
-    // TODO JS How can we inject this?
     private RequestQueue requestQueue;
-
-    public BackendServer(Context context) {
-        this.requestQueue = Volley.newRequestQueue(context);
-    }
 
     public BackendServer(RequestQueue requestQueue) {
         this.requestQueue = requestQueue;
