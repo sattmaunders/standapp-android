@@ -1,4 +1,4 @@
-package com.standapp;
+package com.standapp.google.gcm;
 
 import android.app.Activity;
 import android.content.ComponentName;

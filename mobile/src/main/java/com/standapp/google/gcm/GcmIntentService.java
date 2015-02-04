@@ -1,4 +1,4 @@
-package com.standapp;
+package com.standapp.google.gcm;
 
 
 import android.app.IntentService;
@@ -12,6 +12,8 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.standapp.MainActivity;
+import com.standapp.R;
 
 /**
  * This {@code IntentService} does the actual handling of the GCM message.

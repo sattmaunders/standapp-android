@@ -39,7 +39,7 @@ import com.google.android.gms.fitness.request.SensorRequest;
 import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.standapp.activity.StandAppBaseActionBarActivity;
 import com.standapp.backend.BackendServer;
-import com.standapp.google.GCMHelper;
+import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.GooglePlayServicesHelper;
 import com.standapp.logger.Log;
 import com.standapp.logger.LogWrapper;
@@ -170,12 +170,7 @@ public class MainActivity extends StandAppBaseActionBarActivity {
 
         buildFitnessClient();
 //        inquireStatusServerLoop();
-        doSomethingCool();
 
-    }
-
-    private void doSomethingCool() {
-        backendServer.doSomethingCool();
     }
 
     private void inquireStatusServerLoop() {

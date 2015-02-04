@@ -1,4 +1,4 @@
-package com.standapp.google;
+package com.standapp.util;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;

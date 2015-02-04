@@ -1,4 +1,4 @@
-package com.standapp.google;
+package com.standapp.google.gcm;
 
 import android.app.Activity;
 import android.content.Context;
@@ -10,6 +10,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.standapp.backend.BackendServer;
+import com.standapp.util.AppInfo;
 import com.standapp.logger.Log;
 import com.standapp.logger.LogConstants;
 import com.standapp.preferences.PreferenceAccess;
@@ -137,6 +138,7 @@ public class GCMHelper {
                     regid = gcm.register(SENDER_ID);
 
                     sendRegistrationIdToBackend(regid);
+                    msg = "Trying to register to backend";
                 } catch (IOException ex) {
                     msg = "Error :" + ex.getMessage();
                     // TODO JS If there is an error, don't just keep trying to register.

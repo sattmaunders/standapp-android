@@ -14,7 +14,7 @@ import com.standapp.app.StandAppScopeModule;
 import com.standapp.backend.BackendServer;
 import com.standapp.common.ForActivity;
 import com.standapp.common.ForApplication;
-import com.standapp.google.GCMHelper;
+import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.GooglePlayServicesHelper;
 import com.standapp.preferences.PreferenceAccess;
 
