@@ -41,10 +41,10 @@ public class PreferenceAccess {
     }
 
 
-    public void updateGCMRegistrationId(int appVersion, String regId) {
+    public boolean updateGCMRegistrationId(int appVersion, String regId) {
         SharedPreferences.Editor editor = getGcmPreferences().edit();
         editor.putString(PROPERTY_REG_ID, regId);
         editor.putInt(PROPERTY_APP_VERSION, appVersion);
-        editor.commit();
+        return editor.commit();
     }
 }

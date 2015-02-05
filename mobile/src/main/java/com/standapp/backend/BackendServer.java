@@ -7,6 +7,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.standapp.logger.Log;
 import com.standapp.logger.LogConstants;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -16,11 +17,13 @@ import org.json.JSONObject;
  */
 public class BackendServer {
 
-    public static final String SERVER_BASE_URL = "http://standapp-2015.herokuapp.com";
+    public static final String SERVER_BASE_URL = "http://standapp-server.herokuapp.com";
 
-    private static final String REST_REGISTER = "register";
+    private static final String REST_USER = "user";
     private static final String REST_WORKOUT_START = "workout/start";
     private static final String REST_WORKOUT_END = "workout/end";
+    public static final String USER_ID = "userId";
+    public static final String REG_ID = "regId";
 
     private RequestQueue requestQueue;
 
@@ -29,11 +32,22 @@ public class BackendServer {
     }
 
 
-    public void registerDevice(String registrationId, String userId, Response.Listener<JSONObject> successListener, Response.ErrorListener errorListener) {
-        String url = SERVER_BASE_URL + "/" + REST_REGISTER;
+    public boolean registerDevice(String registrationId, String userId, Response.Listener<JSONObject> successListener, Response.ErrorListener errorListener) {
+        String url = SERVER_BASE_URL + "/" + REST_USER;
         Log.d(LogConstants.LOG_ID, "Registering " + registrationId + " for user " + userId);
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, null, successListener, errorListener);
+        JSONObject params = new JSONObject();
+        try {
+            params.put(USER_ID, userId);
+            params.put(REG_ID, registrationId);
+        } catch (JSONException e) {
+            Log.e(LogConstants.LOG_ID, "Problem creating params for registering user");
+            return false;
+        }
+
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, params, successListener, errorListener);
         requestQueue.add(request);
+
+        return true;
     }
 
     public void startWorkout(String userId, Response.Listener<JSONObject> successListener, Response.ErrorListener errorListener) {

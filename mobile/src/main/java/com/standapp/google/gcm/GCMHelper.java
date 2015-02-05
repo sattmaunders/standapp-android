@@ -1,7 +1,6 @@
 package com.standapp.google.gcm;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.widget.TextView;
@@ -10,10 +9,10 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.standapp.backend.BackendServer;
-import com.standapp.util.AppInfo;
 import com.standapp.logger.Log;
 import com.standapp.logger.LogConstants;
 import com.standapp.preferences.PreferenceAccess;
+import com.standapp.util.AppInfo;
 import com.standapp.util.UserInfo;
 
 import org.json.JSONObject;
@@ -26,25 +25,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class GCMHelper {
 
-//    Activity activity = null;
+    private String SENDER_ID = "665143645608";
+
     public static final String EXTRA_MESSAGE = "message";
-
-
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+
     private GoogleCloudMessaging gcm;
-    private String regid;
+    private String regId;
+    private AtomicInteger msgId = new AtomicInteger();
 
     private PreferenceAccess preferenceAccess;
     private Activity activity;
     private BackendServer backendServer;
-    private UserInfo userInfo;
 
-    /**
-     * Substitute you own sender ID here. This is the project number you got
-     * from the API Console, as described in "Getting Started."
-     */
-    private String SENDER_ID = "665143645608";
-    private AtomicInteger msgId = new AtomicInteger();
+    private UserInfo userInfo;
+    private GCMRegisterCallback gcmRegisterCallback;
 
     public GCMHelper(PreferenceAccess preferenceAccess, Activity activity, BackendServer backendServer, UserInfo userInfo) {
         this.preferenceAccess = preferenceAccess;
@@ -53,19 +48,72 @@ public class GCMHelper {
         this.userInfo = userInfo;
     }
 
-    public void registerDevice(final TextView display) {
+    public void init(GCMRegisterCallback gcmRegisterCallback) {
+        // TODO Fail if gcmRegisterCallback is null
+        this.gcmRegisterCallback = gcmRegisterCallback;
 
         gcm = GoogleCloudMessaging.getInstance(activity);
-        regid = getRegistrationId();
+        regId = getRegistrationId();
 
-        if (regid.isEmpty()) {
-            registerInBackground(display);
+        if (regId.isEmpty()) {
+            registerInBackground();
         } else {
-            Log.i(LogConstants.LOG_ID, "Device already registered with " + regid);
+            gcmRegisterCallback.onAlreadyRegistered(regId);
+            Log.i(LogConstants.LOG_ID, "Device already registered with " + regId);
+            // TODO JS Show user is registered
         }
-
     }
 
+    Response.Listener<JSONObject> gcmRegisterSuccessListener = new Response.Listener<JSONObject>() {
+        public void onResponse(JSONObject response) {
+            boolean regIdStoredSuccesfully = storeRegistrationId();
+            if (regIdStoredSuccesfully) {
+//                logMsg("Device registered (persisted), registration ID=" + gcmHelper.getRegId());
+                // TODO JS Show user is registered
+            } else {
+//                logMsg("Unable to persist regid to local storage");
+                // TODO JS Throw exception and re-try?
+            }
+
+        }
+    };
+
+    Response.ErrorListener gcmRequestErrorListener = new Response.ErrorListener() {
+        @Override
+        public void onErrorResponse(VolleyError error) {
+            String msg = "Failed registered " + regId + ". Backend sent back error "  + error.toString();
+//            logMsg(msg);
+            // TODO JS Throw exception and re-try?
+        }
+    };
+
+
+    private void registerInBackground() {
+        /**
+         * Creates an AsyncTask that registers the application with GCM servers asynchronously.
+         * <p/>
+         * Stores the registration ID and the app versionCode in the application's
+         * shared preferences if successfully accepted by server.
+         *
+         */
+        new AsyncTask<Void, Void, Boolean>() {
+            @Override
+            protected Boolean doInBackground(Void... params) {
+                return sendRequestToRegisterWithServer(gcmRegisterSuccessListener, gcmRequestErrorListener);
+            }
+
+            @Override
+            protected void onPostExecute(Boolean requestSent) {
+                if (!requestSent){
+//                    logMsg("Unable to send request to register user");
+                } else {
+//                    logMsg("Requet sent to register user");
+                }
+            }
+        }.execute(null, null, null);
+    }
+
+    @Deprecated
     public AsyncTask<Void, Void, String> getAsyncTaskSendGCMMessage(final TextView mDisplay) {
         return new AsyncTask<Void, Void, String>() {
             @Override
@@ -92,6 +140,7 @@ public class GCMHelper {
             }
         };
     }
+
 
 
 
@@ -122,81 +171,52 @@ public class GCMHelper {
         return registrationId;
     }
 
+
     /**
-     * Registers the application with GCM servers asynchronously.
-     * <p/>
-     * Stores the registration ID and the app versionCode in the application's
-     * shared preferences if successfully accepted by server.
-     * @param display
+     * @return true if the client sends a request to register
+     * @param gcmRegisterSuccessListener
+     * @param gcmRequestErrorListener
      */
-    private void registerInBackground(final TextView display) {
-        new AsyncTask<Void, Void, String>() {
-            @Override
-            protected String doInBackground(Void... params) {
-                String msg = "";
-                try {
-                    if (gcm == null) {
-                        gcm = GoogleCloudMessaging.getInstance(activity);
-                    }
-                    regid = gcm.register(SENDER_ID);
+    private boolean sendRequestToRegisterWithServer(Response.Listener<JSONObject> gcmRegisterSuccessListener, Response.ErrorListener gcmRequestErrorListener)  {
+        boolean requestSent = false;
+        if (gcm == null) {
+            gcm = GoogleCloudMessaging.getInstance(activity);
+        }
+        try {
+            regId = gcm.register(SENDER_ID);
+            requestSent = sendRegistrationIdToBackend(gcmRegisterSuccessListener, gcmRequestErrorListener) && regId != null && !regId.isEmpty();
+        } catch (IOException e) {
+            Log.e(LogConstants.LOG_ID, "Unable to register with gcm" + e.toString());
+        }
 
-                    sendRegistrationIdToBackend(regid);
-                    msg = "Trying to register to backend";
-                } catch (IOException ex) {
-                    msg = "Error :" + ex.getMessage();
-                    // TODO JS If there is an error, don't just keep trying to register.
-                    // Require the user to click a button again, or perform
-                    // exponential back-off.
-                }
-                return msg;
-            }
-
-            @Override
-            protected void onPostExecute(String msg) {
-                display.append(msg + "\n");
-            }
-        }.execute(null, null, null);
+        return requestSent;
     }
 
     /**
      * Sends the registration ID to your server over HTTP, so it can use GCM/HTTP or CCS to send
      * messages to your app. Not needed for this demo since the device sends upstream messages
      * to a server that echoes back the message using the 'from' address in the message.
-     * @param regid
+     *
+     * @returns true if the request was sent to the server
+     * @param gcmRegisterSuccessListener
+     * @param gcmRequestErrorListener
      */
-    private void sendRegistrationIdToBackend(final String regid) {
-
-        Response.Listener<JSONObject> successListener = new Response.Listener<JSONObject>() {
-            public void onResponse(JSONObject response) {
-                Log.d(LogConstants.LOG_ID, "Device registered, registration ID=" + regid);
-                storeRegistrationId(activity, regid);
-            }
-        };
-
-        Response.ErrorListener errorListener = new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d(LogConstants.LOG_ID, "Failed registered " + regid + " to backend, unable to persist data");
-                // TODO JS Throw exception and re-try?
-            }
-        };
-
-
-        backendServer.registerDevice(regid, userInfo.getUserId(), successListener, errorListener);
+    private boolean sendRegistrationIdToBackend(Response.Listener<JSONObject> gcmRegisterSuccessListener, Response.ErrorListener gcmRequestErrorListener) {
+        Log.i(LogConstants.LOG_ID, "Trying to register to backend");
+        return backendServer.registerDevice(regId, userInfo.getUserId(), gcmRegisterSuccessListener, gcmRequestErrorListener);
     }
 
 
     /**
-     * Stores the registration ID and the app versionCode in the application's
+     * Stores the registration ID and the app versionCode in the application's only if we get
+     * a success response from the server.
+     * <p/>
      * {@code SharedPreferences}.
-     *
-     * @param context application's context.
-     * @param regId   registration ID
      */
-    private void storeRegistrationId(Context context, String regId) {
-        int appVersion = AppInfo.getAppVersion(context);
+    private boolean storeRegistrationId() {
+        int appVersion = AppInfo.getAppVersion(activity);
         Log.i(LogConstants.LOG_ID, "Saving regId on app version " + appVersion);
-        preferenceAccess.updateGCMRegistrationId(appVersion, regId);
+        return preferenceAccess.updateGCMRegistrationId(appVersion, regId);
     }
 
 

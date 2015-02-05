@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Menu;
@@ -39,9 +40,11 @@ import com.google.android.gms.fitness.request.SensorRequest;
 import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.standapp.activity.StandAppBaseActionBarActivity;
 import com.standapp.backend.BackendServer;
-import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.GooglePlayServicesHelper;
+import com.standapp.google.gcm.GCMHelper;
+import com.standapp.google.gcm.GCMRegisterCallback;
 import com.standapp.logger.Log;
+import com.standapp.logger.LogConstants;
 import com.standapp.logger.LogWrapper;
 import com.standapp.logger.MessageOnlyLogFilter;
 
@@ -56,7 +59,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 
-public class MainActivity extends StandAppBaseActionBarActivity {
+public class MainActivity extends StandAppBaseActionBarActivity implements GCMRegisterCallback{
 
     // [START auth_variable_references]
     private static final int REQUEST_OAUTH = 1;
@@ -155,7 +158,7 @@ public class MainActivity extends StandAppBaseActionBarActivity {
 
         // Check device for Play Services APK. If check succeeds, proceed with GCM registration.
         if (googlePlayServicesHelper.checkPlayServices(this)) {
-            gcmHelper.registerDevice(mDisplay);
+            gcmHelper.init(this);
         } else {
             Log.i(TAG, "No valid Google Play Services APK found.");
         }
@@ -172,6 +175,16 @@ public class MainActivity extends StandAppBaseActionBarActivity {
 //        inquireStatusServerLoop();
 
     }
+
+
+
+
+    private void logMsg(String msg) {
+        Log.d(LogConstants.LOG_ID, msg);
+        mDisplay.append(msg + "\n");
+    }
+
+
 
     private void inquireStatusServerLoop() {
         final Handler h = new Handler();
@@ -624,5 +637,30 @@ public class MainActivity extends StandAppBaseActionBarActivity {
 //        logView.setBackgroundColor(Color.WHITE);
 //        msgFilter.setNext(logView);
         Log.i(TAG, "Ready");
+    }
+
+    @Override
+    public void onRegisterSuccess(String regId) {
+
+    }
+
+    @Override
+    public void onRegisterFailure(String regId) {
+
+    }
+
+    @Override
+    public void onRequestSent(String regId) {
+
+    }
+
+    @Override
+    public void onRequestFailed(String regId) {
+
+    }
+
+    @Override
+    public void onAlreadyRegistered(String regId) {
+
     }
 }
