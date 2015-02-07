@@ -1,4 +1,4 @@
-package com.standapp;
+package com.standapp.activity;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -37,7 +37,10 @@ import com.google.android.gms.fitness.request.DataSourcesRequest;
 import com.google.android.gms.fitness.request.OnDataPointListener;
 import com.google.android.gms.fitness.request.SensorRequest;
 import com.google.android.gms.fitness.result.DataSourcesResult;
-import com.standapp.activity.StandAppBaseActionBarActivity;
+import com.standapp.LockScreenActivity;
+import com.standapp.R;
+import com.standapp.activity.common.StandAppBaseActionBarActivity;
+import com.standapp.activity.error.ChromeExtErrorActivity;
 import com.standapp.backend.UserHelper;
 import com.standapp.backend.UserHelperListener;
 import com.standapp.google.GooglePlayServicesHelper;
@@ -80,7 +83,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     /**
      * Tag used on log messages.
      */
-    static final String TAG = "StandApp";
+    public static final String TAG = "StandApp";
 
     @InjectView(R.id.display)
     TextView mDisplay;
@@ -149,13 +152,10 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         ButterKnife.inject(this);
 
         context = getApplicationContext();
-
         userHelper.checkIfUserIsCreated(this);
 
+//        initializeLogging();
 
-        initializeLogging();
-
-        // [START auth_oncreate_setup_ending]
 
         if (savedInstanceState != null) {
             authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
@@ -675,7 +675,10 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     public void onUserNotFound(String userEmail) {
         logMsg("user not found " + userEmail);
-        // TODO JS show a screen to tell user to download our chromeext
+        Intent intent = new Intent(this, ChromeExtErrorActivity.class);
+        this.startActivity(intent);
+        this.finish();
+
 
 
     }

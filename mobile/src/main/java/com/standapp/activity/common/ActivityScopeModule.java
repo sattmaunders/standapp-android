@@ -1,4 +1,4 @@
-package com.standapp.activity;
+package com.standapp.activity.common;
 
 /**
  * Created by John on 2/2/2015.
@@ -9,7 +9,7 @@ import android.content.Context;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
-import com.standapp.MainActivity;
+import com.standapp.activity.MainActivity;
 import com.standapp.app.StandAppScopeModule;
 import com.standapp.backend.BackendServer;
 import com.standapp.backend.UserHelper;

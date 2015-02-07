@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.standapp.MainActivity;
+import com.standapp.activity.MainActivity;
 
 /**
  * Created by John on 2/3/2015.

@@ -9,9 +9,9 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.standapp.activity.MainActivity;
 import com.standapp.logger.Log;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 public class LockScreenActivity extends ActionBarActivity {

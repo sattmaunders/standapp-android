@@ -12,7 +12,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.standapp.MainActivity;
+import com.standapp.activity.MainActivity;
 import com.standapp.R;
 
 /**

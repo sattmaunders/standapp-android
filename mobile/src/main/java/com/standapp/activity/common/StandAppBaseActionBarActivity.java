@@ -1,4 +1,4 @@
-package com.standapp.activity;
+package com.standapp.activity.common;
 
 import com.standapp.common.BaseActionBarActivity;
 
