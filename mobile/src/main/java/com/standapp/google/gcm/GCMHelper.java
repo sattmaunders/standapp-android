@@ -70,8 +70,10 @@ public class GCMHelper {
             if (regIdStoredSuccesfully) {
 //                logMsg("Device registered (persisted), registration ID=" + gcmHelper.getRegId());
                 // TODO JS Show user is registered
+                gcmRegisterCallback.onRegisterSuccess(regId);
             } else {
 //                logMsg("Unable to persist regid to local storage");
+                gcmRegisterCallback.onRegisterFailure(regId);
                 // TODO JS Throw exception and re-try?
             }
 
