@@ -10,6 +10,8 @@ import android.content.Context;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 import com.standapp.activity.MainActivity;
+import com.standapp.activity.error.ChromeExtErrorActivity;
+import com.standapp.activity.error.GenericErrorActivity;
 import com.standapp.app.StandAppScopeModule;
 import com.standapp.backend.BackendServer;
 import com.standapp.backend.UserHelper;
@@ -33,7 +35,9 @@ import dagger.Provides;
         library = true,
         addsTo = StandAppScopeModule.class, // Important for object graph validation at compile time
         injects = {
-                MainActivity.class
+                MainActivity.class,
+                ChromeExtErrorActivity.class,
+                GenericErrorActivity.class
         }
 )
 public class ActivityScopeModule {

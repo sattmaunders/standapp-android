@@ -35,11 +35,11 @@ public class GCMHelper {
     private AtomicInteger msgId = new AtomicInteger();
 
     private PreferenceAccess preferenceAccess;
-    private Activity activity;
+    private Activity activity; // TODO memory leak? unregister
     private BackendServer backendServer;
 
     private UserInfo userInfo;
-    private GCMHelperListener gcmHelperListener;
+    private GCMHelperListener gcmHelperListener; // TODO memory leak? unregister
 
     public GCMHelper(PreferenceAccess preferenceAccess, Activity activity, BackendServer backendServer, UserInfo userInfo) {
         this.preferenceAccess = preferenceAccess;

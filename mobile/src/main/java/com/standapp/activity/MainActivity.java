@@ -41,6 +41,7 @@ import com.standapp.LockScreenActivity;
 import com.standapp.R;
 import com.standapp.activity.common.StandAppBaseActionBarActivity;
 import com.standapp.activity.error.ChromeExtErrorActivity;
+import com.standapp.activity.error.GenericErrorActivity;
 import com.standapp.backend.UserHelper;
 import com.standapp.backend.UserHelperListener;
 import com.standapp.google.GooglePlayServicesHelper;
@@ -630,6 +631,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     public void onRegisterFailure(String regId) {
         logMsg("Unable to persist regid to local storage. unable to register");
+        startGenericErrorActivity();
     }
 
     @Override
@@ -639,13 +641,17 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
     @Override
     public void onRequestNotSent(String regId) {
-        String msg = "Failed registered " + regId + ". Request not sent";
+        logMsg("Failed registered " + regId + ". Request not sent");
+        startGenericErrorActivity();
+    }
+
+    private void startGenericErrorActivity() {
+        replaceThisActivity(GenericErrorActivity.class);
     }
 
     @Override
     public void onAlreadyRegistered(String regId) {
         logMsg("onAlreadyRegistered " + regId);
-
     }
 
     @Override
@@ -675,11 +681,16 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     public void onUserNotFound(String userEmail) {
         logMsg("user not found " + userEmail);
-        Intent intent = new Intent(this, ChromeExtErrorActivity.class);
+        startChromeExtensionErrorActivity();
+    }
+
+    private void startChromeExtensionErrorActivity() {
+        replaceThisActivity(ChromeExtErrorActivity.class);
+    }
+
+    private void replaceThisActivity(Class classActivity) {
+        Intent intent = new Intent(this, classActivity);
         this.startActivity(intent);
         this.finish();
-
-
-
     }
 }

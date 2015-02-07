@@ -18,7 +18,7 @@
     <application
         android:name=".app.StandAppApplication"
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/sa_ic_applauncher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <receiver
@@ -52,6 +52,10 @@
         <activity
             android:name=".activity.error.ChromeExtErrorActivity"
             android:label="@string/title_activity_chrome_ext_error" >
+        </activity>
+        <activity
+            android:name=".activity.error.GenericErrorActivity"
+            android:label="@string/title_activity_generic_error" >
         </activity>
     </application>
 
