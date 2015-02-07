@@ -6,7 +6,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Menu;
@@ -39,10 +38,11 @@ import com.google.android.gms.fitness.request.OnDataPointListener;
 import com.google.android.gms.fitness.request.SensorRequest;
 import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.standapp.activity.StandAppBaseActionBarActivity;
-import com.standapp.backend.BackendServer;
+import com.standapp.backend.UserHelper;
+import com.standapp.backend.UserHelperListener;
 import com.standapp.google.GooglePlayServicesHelper;
 import com.standapp.google.gcm.GCMHelper;
-import com.standapp.google.gcm.GCMRegisterCallback;
+import com.standapp.google.gcm.GCMHelperListener;
 import com.standapp.logger.Log;
 import com.standapp.logger.LogConstants;
 import com.standapp.logger.LogWrapper;
@@ -59,7 +59,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 
-public class MainActivity extends StandAppBaseActionBarActivity implements GCMRegisterCallback{
+public class MainActivity extends StandAppBaseActionBarActivity implements GCMHelperListener, UserHelperListener {
 
     // [START auth_variable_references]
     private static final int REQUEST_OAUTH = 1;
@@ -90,9 +90,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMRe
 
 
     @Inject
-    BackendServer backendServer;
-
-    @Inject
     GooglePlayServicesHelper googlePlayServicesHelper;
 
 
@@ -104,7 +101,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMRe
     // method in order to stop all sensors from sending data to this listener.
     private OnDataPointListener mListener;
     private boolean connectedToFitAPI = false;
-
+    private JSONObject user;
 
 //    private boolean stepCounterListenerRegistered;
     // [END mListener_variable_reference]
@@ -138,8 +135,8 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMRe
     }
 
 
-
-
+    @Inject
+    UserHelper userHelper;
 
     @Inject
     GCMHelper gcmHelper;
@@ -153,15 +150,8 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMRe
 
         context = getApplicationContext();
 
+        userHelper.checkIfUserIsCreated(this);
 
-
-
-        // Check device for Play Services APK. If check succeeds, proceed with GCM registration.
-        if (googlePlayServicesHelper.checkPlayServices(this)) {
-            gcmHelper.init(this);
-        } else {
-            Log.i(TAG, "No valid Google Play Services APK found.");
-        }
 
         initializeLogging();
 
@@ -177,13 +167,10 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMRe
     }
 
 
-
-
     private void logMsg(String msg) {
         Log.d(LogConstants.LOG_ID, msg);
         mDisplay.append(msg + "\n");
     }
-
 
 
     private void inquireStatusServerLoop() {
@@ -220,7 +207,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMRe
                             isServerAway = response.getBoolean("away");
                             isServerReady = response.getBoolean("readyToUnlock");
 
-                            if(isAway != isServerAway) {
+                            if (isAway != isServerAway) {
                                 Log.i(TAG, "Server away status has been changed to:" + isServerAway);
                                 isAway = isServerAway;
 
@@ -230,10 +217,10 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMRe
                                 }
                             }
 
-                            if (isReady != isServerReady  && isLocked){
+                            if (isReady != isServerReady && isLocked) {
                                 isReady = isServerReady;
 
-                                if (isReady){
+                                if (isReady) {
                                     Log.i(TAG, "User is ready to unlock screen");
                                     tellUserHeCanGoBackToDesk();
                                 }
@@ -616,10 +603,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMRe
     }
 
 
-
-
-
-
     /**
      * Initialize a custom log class that outputs both to in-app targets and logcat.
      */
@@ -641,26 +624,59 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMRe
 
     @Override
     public void onRegisterSuccess(String regId) {
-
+        logMsg("Device registered (persisted), registration ID=" + regId);
     }
 
     @Override
     public void onRegisterFailure(String regId) {
-
+        logMsg("Unable to persist regid to local storage. unable to register");
     }
 
     @Override
     public void onRequestSent(String regId) {
-
+        logMsg("Request sent " + regId);
     }
 
     @Override
-    public void onRequestFailed(String regId) {
-
+    public void onRequestNotSent(String regId) {
+        String msg = "Failed registered " + regId + ". Request not sent";
     }
 
     @Override
     public void onAlreadyRegistered(String regId) {
+        logMsg("onAlreadyRegistered " + regId);
+
+    }
+
+    @Override
+    // TODO pass in User POJO instead of JSONObject
+    public void onUserExists(JSONObject user) {
+        logMsg("user exists " + user.toString());
+
+        this.user = user; //Store the user in MainActivity for later usage.
+
+        if (googlePlayServicesHelper.checkPlayServices(this)) {
+            try {
+                gcmHelper.init(this, user.getString("_id"));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        } else {
+            Log.i(TAG, "No valid Google Play Services APK found.");
+            // TODO Throw exception
+        }
+    }
+
+    @Override
+    public void onEmailMissing(String userEmail) {
+        logMsg("user missing " + userEmail);
+    }
+
+    @Override
+    public void onUserNotFound(String userEmail) {
+        logMsg("user not found " + userEmail);
+        // TODO JS show a screen to tell user to download our chromeext
+
 
     }
 }

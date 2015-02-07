@@ -20,10 +20,13 @@ public class BackendServer {
     public static final String SERVER_BASE_URL = "http://standapp-server.herokuapp.com";
 
     private static final String REST_USER = "user";
+    private static final String REST_GCMKEY = "gcmKey";
+
     private static final String REST_WORKOUT_START = "workout/start";
     private static final String REST_WORKOUT_END = "workout/end";
     public static final String USER_ID = "userId";
     public static final String REG_ID = "regId";
+    public static final String EMAIL = "email";
 
     private RequestQueue requestQueue;
 
@@ -31,22 +34,28 @@ public class BackendServer {
         this.requestQueue = requestQueue;
     }
 
-
-    public boolean registerDevice(String registrationId, String userId, Response.Listener<JSONObject> successListener, Response.ErrorListener errorListener) {
-        String url = SERVER_BASE_URL + "/" + REST_USER;
-        Log.d(LogConstants.LOG_ID, "Registering " + registrationId + " for user " + userId);
-        JSONObject params = new JSONObject();
-        try {
-            params.put(USER_ID, userId);
-            params.put(REG_ID, registrationId);
-        } catch (JSONException e) {
-            Log.e(LogConstants.LOG_ID, "Problem creating params for registering user");
-            return false;
-        }
-
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, params, successListener, errorListener);
+    /**
+     * Ask server for user by email. If no user exists, then we need them to download the ChromeExt.
+     *
+     * @param userEmail
+     * @param successListener
+     * @param errorListener
+     * @return
+     */
+    public boolean getUserByEmail(String userEmail, Response.Listener<JSONObject> successListener, Response.ErrorListener errorListener) {
+        String url = SERVER_BASE_URL + "/" + REST_USER + "?" + EMAIL + "=" + userEmail;
+        Log.d(LogConstants.LOG_ID, "getUserByEmail: " + userEmail);
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, successListener, errorListener);
         requestQueue.add(request);
+        return true;
+    }
 
+
+    public boolean registerGCMRegKey(String registrationId, String userId, Response.Listener<JSONObject> successListener, Response.ErrorListener errorListener) {
+        String url = SERVER_BASE_URL + "/" + REST_USER + "/" + userId + "/" + REST_GCMKEY + "/" + registrationId;
+        Log.d(LogConstants.LOG_ID, "Registering " + registrationId + " for userId " + userId);
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, null, successListener, errorListener);
+        requestQueue.add(request);
         return true;
     }
 

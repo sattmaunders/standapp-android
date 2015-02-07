@@ -16,7 +16,7 @@ public class UserInfo {
         this.context = context;
     }
 
-    public String getUserId(){
+    public String getUserEmail(){
         AccountManager manager = (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
         Account[] list = manager.getAccounts();
         String gmail = null;

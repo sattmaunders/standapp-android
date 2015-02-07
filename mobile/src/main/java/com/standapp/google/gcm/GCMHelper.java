@@ -39,7 +39,7 @@ public class GCMHelper {
     private BackendServer backendServer;
 
     private UserInfo userInfo;
-    private GCMRegisterCallback gcmRegisterCallback;
+    private GCMHelperListener gcmHelperListener;
 
     public GCMHelper(PreferenceAccess preferenceAccess, Activity activity, BackendServer backendServer, UserInfo userInfo) {
         this.preferenceAccess = preferenceAccess;
@@ -48,17 +48,17 @@ public class GCMHelper {
         this.userInfo = userInfo;
     }
 
-    public void init(GCMRegisterCallback gcmRegisterCallback) {
-        // TODO Fail if gcmRegisterCallback is null
-        this.gcmRegisterCallback = gcmRegisterCallback;
+    public void init(GCMHelperListener gcmHelperListener, String userId) {
+        // TODO Fail if gcmHelperListener is null
+        this.gcmHelperListener = gcmHelperListener;
 
         gcm = GoogleCloudMessaging.getInstance(activity);
         regId = getRegistrationId();
 
         if (regId.isEmpty()) {
-            registerInBackground();
+            registerInBackground(userId);
         } else {
-            gcmRegisterCallback.onAlreadyRegistered(regId);
+            gcmHelperListener.onAlreadyRegistered(regId);
             Log.i(LogConstants.LOG_ID, "Device already registered with " + regId);
             // TODO JS Show user is registered
         }
@@ -68,13 +68,9 @@ public class GCMHelper {
         public void onResponse(JSONObject response) {
             boolean regIdStoredSuccesfully = storeRegistrationId();
             if (regIdStoredSuccesfully) {
-//                logMsg("Device registered (persisted), registration ID=" + gcmHelper.getRegId());
-                // TODO JS Show user is registered
-                gcmRegisterCallback.onRegisterSuccess(regId);
+                gcmHelperListener.onRegisterSuccess(regId);
             } else {
-//                logMsg("Unable to persist regid to local storage");
-                gcmRegisterCallback.onRegisterFailure(regId);
-                // TODO JS Throw exception and re-try?
+                gcmHelperListener.onRegisterFailure(regId);
             }
 
         }
@@ -83,14 +79,12 @@ public class GCMHelper {
     Response.ErrorListener gcmRequestErrorListener = new Response.ErrorListener() {
         @Override
         public void onErrorResponse(VolleyError error) {
-            String msg = "Failed registered " + regId + ". Backend sent back error "  + error.toString();
-//            logMsg(msg);
-            // TODO JS Throw exception and re-try?
+            gcmHelperListener.onRegisterFailure(regId);
         }
     };
 
 
-    private void registerInBackground() {
+    private void registerInBackground(final String userId) {
         /**
          * Creates an AsyncTask that registers the application with GCM servers asynchronously.
          * <p/>
@@ -101,15 +95,15 @@ public class GCMHelper {
         new AsyncTask<Void, Void, Boolean>() {
             @Override
             protected Boolean doInBackground(Void... params) {
-                return sendRequestToRegisterWithServer(gcmRegisterSuccessListener, gcmRequestErrorListener);
+                return sendRequestToRegisterWithServer(userId, gcmRegisterSuccessListener, gcmRequestErrorListener);
             }
 
             @Override
             protected void onPostExecute(Boolean requestSent) {
                 if (!requestSent){
-//                    logMsg("Unable to send request to register user");
+                    gcmHelperListener.onRequestNotSent(regId);
                 } else {
-//                    logMsg("Requet sent to register user");
+                    gcmHelperListener.onRequestSent(regId);
                 }
             }
         }.execute(null, null, null);
@@ -176,19 +170,23 @@ public class GCMHelper {
 
     /**
      * @return true if the client sends a request to register
+     * @param userId
      * @param gcmRegisterSuccessListener
      * @param gcmRequestErrorListener
      */
-    private boolean sendRequestToRegisterWithServer(Response.Listener<JSONObject> gcmRegisterSuccessListener, Response.ErrorListener gcmRequestErrorListener)  {
+    private boolean sendRequestToRegisterWithServer(String userId, Response.Listener<JSONObject> gcmRegisterSuccessListener, Response.ErrorListener gcmRequestErrorListener)  {
         boolean requestSent = false;
         if (gcm == null) {
             gcm = GoogleCloudMessaging.getInstance(activity);
         }
         try {
             regId = gcm.register(SENDER_ID);
-            requestSent = sendRegistrationIdToBackend(gcmRegisterSuccessListener, gcmRequestErrorListener) && regId != null && !regId.isEmpty();
+            requestSent = sendRegistrationIdToBackend(userId, gcmRegisterSuccessListener, gcmRequestErrorListener) &&
+                    regId != null && !regId.isEmpty() &&
+                    userId != null && !userId.isEmpty();
         } catch (IOException e) {
             Log.e(LogConstants.LOG_ID, "Unable to register with gcm" + e.toString());
+            // TODO JS callback
         }
 
         return requestSent;
@@ -200,12 +198,13 @@ public class GCMHelper {
      * to a server that echoes back the message using the 'from' address in the message.
      *
      * @returns true if the request was sent to the server
+     * @param userId
      * @param gcmRegisterSuccessListener
      * @param gcmRequestErrorListener
      */
-    private boolean sendRegistrationIdToBackend(Response.Listener<JSONObject> gcmRegisterSuccessListener, Response.ErrorListener gcmRequestErrorListener) {
+    private boolean sendRegistrationIdToBackend(String userId, Response.Listener<JSONObject> gcmRegisterSuccessListener, Response.ErrorListener gcmRequestErrorListener) {
         Log.i(LogConstants.LOG_ID, "Trying to register to backend");
-        return backendServer.registerDevice(regId, userInfo.getUserId(), gcmRegisterSuccessListener, gcmRequestErrorListener);
+        return backendServer.registerGCMRegKey(regId, userId, gcmRegisterSuccessListener, gcmRequestErrorListener);
     }
 
 
@@ -216,6 +215,7 @@ public class GCMHelper {
      * {@code SharedPreferences}.
      */
     private boolean storeRegistrationId() {
+        // TODO JS store the userId as well so that the MainActivity can check that and not query for userId.
         int appVersion = AppInfo.getAppVersion(activity);
         Log.i(LogConstants.LOG_ID, "Saving regId on app version " + appVersion);
         return preferenceAccess.updateGCMRegistrationId(appVersion, regId);

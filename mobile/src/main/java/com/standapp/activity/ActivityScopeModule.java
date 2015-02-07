@@ -12,6 +12,7 @@ import com.android.volley.toolbox.Volley;
 import com.standapp.MainActivity;
 import com.standapp.app.StandAppScopeModule;
 import com.standapp.backend.BackendServer;
+import com.standapp.backend.UserHelper;
 import com.standapp.common.ForActivity;
 import com.standapp.common.ForApplication;
 import com.standapp.google.gcm.GCMHelper;
@@ -85,6 +86,12 @@ public class ActivityScopeModule {
     PreferenceAccess providePreferenceAccess(Activity activity) {
         PreferenceAccess pa = new PreferenceAccess(activity);
         return pa;
+    }
+
+    @Provides
+    @Singleton
+    UserHelper provideUserHelper(BackendServer backendServer, UserInfo userInfo) {
+        return new UserHelper(backendServer, userInfo);
     }
 
 
