@@ -42,7 +42,19 @@
             android:layout_centerInParent="true"
             android:background="@color/green"
             android:padding="15dp"
-            android:id="@+id/tv_chromeext_error_link" />
+            android:id="@+id/btn_chromeext_error_link" />
+
+        <Button
+            android:layout_below="@+id/btn_chromeext_error_link"
+            android:text="@string/already_have_ext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_centerInParent="true"
+            android:padding="15dp"
+            android:id="@+id/btn_already_have_ext" />
+
+
         <!--TODO Refactor button background into a seperate file-->
     </RelativeLayout>
 

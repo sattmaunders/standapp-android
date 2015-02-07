@@ -2,4 +2,5 @@
 <resources>
     <item name="blue" type="color">#4081BD</item>
     <item name="green" type="color">#BAE745</item>
+    <item name="secondary" type="color">#f9e3e1e9</item>
 </resources>

@@ -1,12 +1,19 @@
 package com.standapp.activity.error;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 
 import com.standapp.R;
+import com.standapp.activity.MainActivity;
 import com.standapp.activity.common.StandAppBaseActivity;
+
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class ChromeExtErrorActivity extends StandAppBaseActivity {
 
@@ -14,6 +21,7 @@ public class ChromeExtErrorActivity extends StandAppBaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chrome_ext_error);
+        ButterKnife.inject(this);
     }
 
 
@@ -38,4 +46,18 @@ public class ChromeExtErrorActivity extends StandAppBaseActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    @OnClick(R.id.btn_chromeext_error_link)
+    public void onClickLink(Button button) {
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getResources().getString(R.string.chrome_ext_error_link)));
+        startActivity(browserIntent);
+    }
+
+    @OnClick(R.id.btn_already_have_ext)
+    public void onClickAlreadyHaveExt(Button button) {
+        Intent intent = new Intent(this, MainActivity.class);
+        this.startActivity(intent);
+        this.finish();
+    }
+
 }

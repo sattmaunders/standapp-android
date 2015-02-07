@@ -25,9 +25,7 @@ public class GenericErrorActivity extends StandAppBaseActivity {
     }
 
     @OnClick(R.id.btn_try_again)
-    public void onTryAgainClick(Button button) {
-        // TODO submit data to server...
-        button.setText("Hello!");
+    public void onClickTryAgain(Button button) {
         Intent intent = new Intent(this, MainActivity.class);
         this.startActivity(intent);
         this.finish();
