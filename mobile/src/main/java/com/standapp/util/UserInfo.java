@@ -29,7 +29,7 @@ public class UserInfo {
                 break;
             }
         }
-        return "shit";
+        return "john.sintal@gmail.com";
 //        return gmail;
     }
 }

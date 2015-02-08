@@ -3,4 +3,16 @@
     <item name="blue" type="color">#4081BD</item>
     <item name="green" type="color">#BAE745</item>
     <item name="secondary" type="color">#f9e3e1e9</item>
+
+    <item name="colorPrimary" type="color">#BAE745</item>
+    <item name="colorPrimaryDark" type="color">#4081BD</item>
+    <item name="colorAccent" type="color">#f9e9e54c</item>
+
+    <item name="FOCUSED_STATE_COLOR" type="color">#f900e9b4</item>
+    <item name="PRESSED_STATE_COLOR" type="color">#6fbae745</item>
+    <item name="NORMAL_STATE_COLOR" type="color">@color/colorPrimary</item>
+
+    <item name="FOCUSED_STATE_COLOR_SECONDARY" type="color">#6460695d</item>
+    <item name="PRESSED_STATE_COLOR_SECONDARY" type="color">#3d60695d</item>
+    <item name="NORMAL_STATE_COLOR_SECONDARY" type="color">#6460695d</item>
 </resources>
