@@ -35,6 +35,8 @@ public class GoogleFitAPIHelper {
      * and in those cases, there will be a known resolution, which the OnConnectionFailedListener()
      * can address. Examples of this include the user never having signed in before, or having
      * multiple accounts on the device and needing to specify which account to use, etc.
+     *
+     * TODO JS should this be in constructor?
      * @param connectionCallbacks
      * @param onConnectionFailedListener
      */
@@ -55,5 +57,9 @@ public class GoogleFitAPIHelper {
 
     public boolean isConnecting() {
         return mClient.isConnecting();
+    }
+
+    public GoogleApiClient getClient() {
+        return mClient;
     }
 }

@@ -29,7 +29,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.fitness.data.DataSource;
 import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Value;
-import com.google.android.gms.fitness.request.OnDataPointListener;
 import com.google.android.gms.fitness.request.SensorRequest;
 import com.standapp.LockScreenActivity;
 import com.standapp.R;
@@ -98,9 +97,9 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     // [END auth_variable_references]
 
     // [START mListener_variable_reference]
-    // Need to hold a reference to this listener, as it's passed into the "unregister"
-    // method in order to stop all sensors from sending data to this listener.
-    private OnDataPointListener mListener;
+//    // Need to hold a reference to this listener, as it's passed into the "unregister"
+//    // method in order to stop all sensors from sending data to this listener.
+//    private OnDataPointListener mListener;
     private boolean connectedToFitAPI = false;
     private JSONObject user;
 
@@ -362,7 +361,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
         // Build notification
         // Actions are just fake
-        Notification noti = new Notification.Builder(this)
+        Notification notification = new Notification.Builder(this)
                 .setContentTitle("Leaving your computer?")
                 .setContentText("Would you like to lock your computer.").setSmallIcon(R.drawable.ic_exercise)
                 .setContentIntent(lockScreenActivity)
@@ -371,20 +370,14 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
                 .addAction(R.drawable.ic_no, "No", pIntentMainActivity).build();
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         // hide the notification after its selected
-        noti.flags |= Notification.FLAG_AUTO_CANCEL;
-        noti.defaults |= Notification.DEFAULT_SOUND;
-        noti.defaults |= Notification.DEFAULT_VIBRATE;
+        notification.flags |= Notification.FLAG_AUTO_CANCEL;
+        notification.defaults |= Notification.DEFAULT_SOUND;
+        notification.defaults |= Notification.DEFAULT_VIBRATE;
 
         Log.i(TAG, "Asked user to lock screen.");
-        notificationManager.notify(1, noti);
+        notificationManager.notify(1, notification);
     }
 
-    // [END auth_oncreate_setup_ending]
-
-    // [START auth_build_googleapiclient_beginning]
-
-
-    // [END auth_build_googleapiclient_ending]
 
     @Override
     protected void onResume() {
@@ -393,7 +386,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         googlePlayServicesHelper.checkPlayServices(this);
     }
 
-    // [START auth_connection_flow_in_activity_lifecycle_methods]
     @Override
     protected void onStart() {
         super.onStart();

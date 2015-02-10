@@ -13,11 +13,25 @@ import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.fitness.Fitness;
+import com.google.android.gms.fitness.data.DataPoint;
+import com.google.android.gms.fitness.data.DataSource;
+import com.google.android.gms.fitness.data.DataType;
+import com.google.android.gms.fitness.data.Field;
+import com.google.android.gms.fitness.data.Value;
+import com.google.android.gms.fitness.request.DataSourcesRequest;
+import com.google.android.gms.fitness.request.OnDataPointListener;
+import com.google.android.gms.fitness.request.SensorRequest;
+import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.standapp.R;
 import com.standapp.activity.MainActivity;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
 import com.standapp.logger.LogConstants;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * This {@code IntentService} does the actual handling of the GCM message.
@@ -32,11 +46,14 @@ public class GcmIntentService extends IntentService {
     NotificationCompat.Builder builder;
     private GoogleFitAPIHelper googleFitAPIHelper;
 
+    // Need to hold a reference to this listener, as it's passed into the "unregister"
+    // method in order to stop all sensors from sending data to this listener.
+    private OnDataPointListener mListener;
+
     public GcmIntentService() {
         super("GcmIntentService");
         googleFitAPIHelper = new GoogleFitAPIHelper(this);
     }
-    public static final String TAG = "GCM Demo";
 
 
     @Override
@@ -60,22 +77,22 @@ public class GcmIntentService extends IntentService {
                 // If it's a regular GCM message, do some work.
             } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
                 // This loop represents the service doing some work.
-//                for (int i = 0; i < 5; i++) {
-//                    Log.i(TAG, "Working... " + (i + 1)
-//                            + "/5 @ " + SystemClock.elapsedRealtime());
-//                    try {
-//                        Thread.sleep(5000);
-//                    } catch (InterruptedException e) {
-//                    }
-//                }
-                Log.i(TAG, "Completed work @ " + SystemClock.elapsedRealtime());
+                for (int i = 0; i < 5; i++) {
+                    Log.i(LogConstants.LOG_ID, "Working... " + (i + 1)
+                            + "/5 @ " + SystemClock.elapsedRealtime());
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                    }
+                }
+                Log.i(LogConstants.LOG_ID, "Completed work @ " + SystemClock.elapsedRealtime());
                 // Post notification of received message.
                 sendNotification("Received: " + extras.toString());
-                Log.i(TAG, "Received: " + extras.toString());
+                Log.i(LogConstants.LOG_ID, "Received: " + extras.toString());
             }
         }
         // Release the wake lock provided by the WakefulBroadcastReceiver.
-        GcmBroadcastReceiver.completeWakefulIntent(intent);
+//        GcmBroadcastReceiver.completeWakefulIntent(intent);
     }
 
 
@@ -121,6 +138,8 @@ public class GcmIntentService extends IntentService {
             googleFitAPIHelper.connect();
         }
 
+        findFitnessDataSources();
+
         mNotificationManager = (NotificationManager)
                 this.getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -137,5 +156,112 @@ public class GcmIntentService extends IntentService {
 
         mBuilder.setContentIntent(contentIntent);
         mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+    }
+
+
+
+    /**
+     * Find available data sources and attempt to register on a specific {@link com.google.android.gms.fitness.data.DataType}.
+     * If the application cares about a data type but doesn't care about the source of the data,
+     * this can be skipped entirely, instead calling
+     * {@link com.google.android.gms.fitness.SensorsApi
+     * #register(GoogleApiClient, SensorRequest, DataSourceListener)},
+     * where the {@link com.google.android.gms.fitness.request.SensorRequest} contains the desired data type.
+     */
+    private void findFitnessDataSources() {
+        // [START find_data_sources]
+        Fitness.SensorsApi.findDataSources(googleFitAPIHelper.getClient(), new DataSourcesRequest.Builder()
+                // At least one datatype must be specified.
+                .setDataTypes(DataType.TYPE_STEP_COUNT_CUMULATIVE)
+                // Can specify whether data type is raw or derived.
+                .setDataSourceTypes(DataSource.TYPE_RAW)
+                .build())
+                .setResultCallback(new ResultCallback<DataSourcesResult>() {
+                    @Override
+                    public void onResult(DataSourcesResult dataSourcesResult) {
+
+                        Log.i(LogConstants.LOG_ID, "Result: " + dataSourcesResult.getStatus().toString());
+                        for (DataSource dataSource : dataSourcesResult.getDataSources()) {
+                            Log.i(LogConstants.LOG_ID, "Data source found: " + dataSource.toString());
+                            Log.i(LogConstants.LOG_ID, "Data Source type: " + dataSource.getDataType().getName());
+                            //Let's register a listener to receive Activity data!
+                            if (dataSource.getDataType().equals(DataType.TYPE_STEP_COUNT_CUMULATIVE)
+                                    && mListener == null) {
+                                Log.i(LogConstants.LOG_ID, "Data source for TYPE_STEP_COUNT_CUMULATIVE found!  Registering.");
+                                registerFitnessDataListener(dataSource,
+                                        DataType.TYPE_STEP_COUNT_CUMULATIVE);
+                            }
+                        }
+                    }
+                });
+    }
+
+    /**
+     * Register a listener with the Sensors API for the provided {@link com.google.android.gms.fitness.data.DataSource} and
+     * {@link com.google.android.gms.fitness.data.DataType} combo.
+     */
+    private void registerFitnessDataListener(DataSource dataSource, DataType dataType) {
+        // [START register_data_listener]
+        mListener = new OnDataPointListener() {
+            @Override
+            public void onDataPoint(DataPoint dataPoint) {
+                for (Field field : dataPoint.getDataType().getFields()) {
+                    Value val = dataPoint.getValue(field);
+                    Log.i(LogConstants.LOG_ID, "Detected DataPoint field: " + field.getName());
+                    Log.i(LogConstants.LOG_ID, "Detected DataPoint value: " + val);
+                    // Once we reach a # of steps, unregister
+                }
+            }
+        };
+
+        Fitness.SensorsApi.add(
+                googleFitAPIHelper.getClient(),
+                new SensorRequest.Builder()
+                        .setDataSource(dataSource) // Optional but recommended for custom data sets.
+                        .setDataType(dataType) // Can't be omitted.
+                        .setSamplingRate(3, TimeUnit.SECONDS)
+                        .build(),
+                mListener)
+                .setResultCallback(new ResultCallback<Status>() {
+                    @Override
+                    public void onResult(Status status) {
+                        if (status.isSuccess()) {
+                            Log.i(LogConstants.LOG_ID, "Listener registered!");
+                        } else {
+                            Log.i(LogConstants.LOG_ID, "Listener not registered.");
+                        }
+                    }
+                });
+        // [END register_data_listener]
+    }
+
+    /**
+     * Unregister the listener with the Sensors API.
+     */
+    private void unregisterFitnessDataListener() {
+        if (mListener == null) {
+            // This code only activates one listener at a time.  If there's no listener, there's
+            // nothing to unregister.
+            return;
+        }
+
+        // [START unregister_data_listener]
+        // Waiting isn't actually necessary as the unregister call will complete regardless,
+        // even if called from within onStop, but a callback can still be added in order to
+        // inspect the results.
+        Fitness.SensorsApi.remove(
+                googleFitAPIHelper.getClient(),
+                mListener)
+                .setResultCallback(new ResultCallback<Status>() {
+                    @Override
+                    public void onResult(Status status) {
+                        if (status.isSuccess()) {
+                            Log.i(LogConstants.LOG_ID, "Listener was removed!");
+                        } else {
+                            Log.i(LogConstants.LOG_ID, "Listener was not removed.");
+                        }
+                    }
+                });
+        // [END unregister_data_listener]
     }
 }
