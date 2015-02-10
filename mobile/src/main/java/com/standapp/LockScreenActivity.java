@@ -2,6 +2,7 @@ package com.standapp;
 
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -10,7 +11,6 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.standapp.activity.MainActivity;
-import com.standapp.logger.Log;
 
 import org.json.JSONObject;
 

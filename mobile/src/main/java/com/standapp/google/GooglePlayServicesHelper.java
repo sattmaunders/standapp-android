@@ -1,9 +1,9 @@
 package com.standapp.google;
 
 import android.app.Activity;
+import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.standapp.logger.Log;
 import com.standapp.logger.LogConstants;
 
 /**

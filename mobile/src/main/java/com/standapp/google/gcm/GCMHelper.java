@@ -3,13 +3,13 @@ package com.standapp.google.gcm;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.standapp.backend.BackendServer;
-import com.standapp.logger.Log;
 import com.standapp.logger.LogConstants;
 import com.standapp.preferences.PreferenceAccess;
 import com.standapp.util.AppInfo;

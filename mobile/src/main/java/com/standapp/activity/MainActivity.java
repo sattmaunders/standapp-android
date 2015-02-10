@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,10 +42,7 @@ import com.standapp.google.GooglePlayServicesHelper;
 import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.gcm.GCMHelperListener;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
-import com.standapp.logger.Log;
 import com.standapp.logger.LogConstants;
-import com.standapp.logger.LogWrapper;
-import com.standapp.logger.MessageOnlyLogFilter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -157,9 +155,9 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             // If your connection to the sensor gets lost at some point,
             // you'll be able to determine the reason and react to it here.
             if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_NETWORK_LOST) {
-                com.standapp.logger.Log.i(LogConstants.LOG_ID, "Connection lost.  Cause: Network Lost.");
+                Log.i(LogConstants.LOG_ID, "Connection lost.  Cause: Network Lost.");
             } else if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_SERVICE_DISCONNECTED) {
-                com.standapp.logger.Log.i(LogConstants.LOG_ID, "Connection lost.  Reason: Service Disconnected");
+                Log.i(LogConstants.LOG_ID, "Connection lost.  Reason: Service Disconnected");
             }
         }
     };
@@ -167,7 +165,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     GoogleApiClient.OnConnectionFailedListener onConnectionFailedListener = new GoogleApiClient.OnConnectionFailedListener() {
         @Override
         public void onConnectionFailed(ConnectionResult result) {
-            com.standapp.logger.Log.i(LogConstants.LOG_ID, "Connection failed. Cause: " + result.toString());
+            Log.i(LogConstants.LOG_ID, "Connection failed. Cause: " + result.toString());
             if (!result.hasResolution()) {
                 GooglePlayServicesUtil.getErrorDialog(result.getErrorCode(), MainActivity.this, 0).show();
                 mDisplay.append("Google fit api failed, no resoltion!");
@@ -574,25 +572,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         super.onDestroy();
     }
 
-
-    /**
-     * Initialize a custom log class that outputs both to in-app targets and logcat.
-     */
-    private void initializeLogging() {
-        // Wraps Android's native log framework.
-        LogWrapper logWrapper = new LogWrapper();
-        // Using Log, front-end to the logging chain, emulates android.util.log method signatures.
-        Log.setLogNode(logWrapper);
-        // Filter strips out everything except the message text.
-        MessageOnlyLogFilter msgFilter = new MessageOnlyLogFilter();
-        logWrapper.setNext(msgFilter);
-        // On screen logging via a customized TextView.
-//        LogView logView = (LogView) findViewById(R.id.sample_logview);
-//        logView.setTextAppearance(this, R.style.Log);
-//        logView.setBackgroundColor(Color.WHITE);
-//        msgFilter.setNext(logView);
-        Log.i(TAG, "Ready");
-    }
 
     @Override
     public void onRegisterSuccess(String regId) {

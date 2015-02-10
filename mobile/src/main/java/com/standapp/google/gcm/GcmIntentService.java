@@ -83,7 +83,7 @@ public class GcmIntentService extends IntentService {
 
         @Override
         public void onConnected(Bundle bundle) {
-            com.standapp.logger.Log.i(LogConstants.LOG_ID, "Google Fit connected");
+            Log.i(LogConstants.LOG_ID, "Google Fit connected");
         }
 
         @Override
@@ -91,9 +91,9 @@ public class GcmIntentService extends IntentService {
             // If your connection to the sensor gets lost at some point,
             // you'll be able to determine the reason and react to it here.
             if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_NETWORK_LOST) {
-                com.standapp.logger.Log.i(LogConstants.LOG_ID, "Connection lost.  Cause: Network Lost.");
+                Log.i(LogConstants.LOG_ID, "Connection lost.  Cause: Network Lost.");
             } else if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_SERVICE_DISCONNECTED) {
-                com.standapp.logger.Log.i(LogConstants.LOG_ID, "Connection lost.  Reason: Service Disconnected");
+                Log.i(LogConstants.LOG_ID, "Connection lost.  Reason: Service Disconnected");
             }
         }
     };
@@ -102,7 +102,7 @@ public class GcmIntentService extends IntentService {
         // Called whenever the API client fails to connect.
         @Override
         public void onConnectionFailed(ConnectionResult result) {
-            com.standapp.logger.Log.i(LogConstants.LOG_ID, "Connection failed. Cause: " + result.toString());
+            Log.i(LogConstants.LOG_ID, "Connection failed. Cause: " + result.toString());
             if (!result.hasResolution()) {
                 // FIXME JS send notification that opens MainActivity.class to authenticate.
                 return;
@@ -129,7 +129,7 @@ public class GcmIntentService extends IntentService {
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.ic_plusone_small_off_client)
+                        .setSmallIcon(R.drawable.sa_ic_applauncher)
                         .setContentTitle("GCM Notification")
                         .setStyle(new NotificationCompat.BigTextStyle()
                                 .bigText(msg))
