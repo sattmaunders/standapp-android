@@ -11,9 +11,13 @@ import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.standapp.activity.MainActivity;
 import com.standapp.R;
+import com.standapp.activity.MainActivity;
+import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
+import com.standapp.logger.LogConstants;
 
 /**
  * This {@code IntentService} does the actual handling of the GCM message.
@@ -26,11 +30,14 @@ public class GcmIntentService extends IntentService {
     public static final int NOTIFICATION_ID = 1;
     private NotificationManager mNotificationManager;
     NotificationCompat.Builder builder;
+    private GoogleFitAPIHelper googleFitAPIHelper;
 
     public GcmIntentService() {
         super("GcmIntentService");
+        googleFitAPIHelper = new GoogleFitAPIHelper(this);
     }
     public static final String TAG = "GCM Demo";
+
 
     @Override
     protected void onHandleIntent(Intent intent) {
@@ -53,14 +60,14 @@ public class GcmIntentService extends IntentService {
                 // If it's a regular GCM message, do some work.
             } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
                 // This loop represents the service doing some work.
-                for (int i = 0; i < 5; i++) {
-                    Log.i(TAG, "Working... " + (i + 1)
-                            + "/5 @ " + SystemClock.elapsedRealtime());
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                    }
-                }
+//                for (int i = 0; i < 5; i++) {
+//                    Log.i(TAG, "Working... " + (i + 1)
+//                            + "/5 @ " + SystemClock.elapsedRealtime());
+//                    try {
+//                        Thread.sleep(5000);
+//                    } catch (InterruptedException e) {
+//                    }
+//                }
                 Log.i(TAG, "Completed work @ " + SystemClock.elapsedRealtime());
                 // Post notification of received message.
                 sendNotification("Received: " + extras.toString());
@@ -71,10 +78,49 @@ public class GcmIntentService extends IntentService {
         GcmBroadcastReceiver.completeWakefulIntent(intent);
     }
 
+
+    private GoogleApiClient.ConnectionCallbacks connectionCallbacks = new GoogleApiClient.ConnectionCallbacks() {
+
+        @Override
+        public void onConnected(Bundle bundle) {
+            com.standapp.logger.Log.i(LogConstants.LOG_ID, "Google Fit connected");
+        }
+
+        @Override
+        public void onConnectionSuspended(int i) {
+            // If your connection to the sensor gets lost at some point,
+            // you'll be able to determine the reason and react to it here.
+            if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_NETWORK_LOST) {
+                com.standapp.logger.Log.i(LogConstants.LOG_ID, "Connection lost.  Cause: Network Lost.");
+            } else if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_SERVICE_DISCONNECTED) {
+                com.standapp.logger.Log.i(LogConstants.LOG_ID, "Connection lost.  Reason: Service Disconnected");
+            }
+        }
+    };
+
+    GoogleApiClient.OnConnectionFailedListener onConnectionFailedListener = new GoogleApiClient.OnConnectionFailedListener() {
+        // Called whenever the API client fails to connect.
+        @Override
+        public void onConnectionFailed(ConnectionResult result) {
+            com.standapp.logger.Log.i(LogConstants.LOG_ID, "Connection failed. Cause: " + result.toString());
+            if (!result.hasResolution()) {
+                // FIXME JS send notification that opens MainActivity.class to authenticate.
+                return;
+            }
+            // FIXME JS send notification that opens MainActivity.class to authenticate.
+        }
+    };
+
     // Put the message into a notification and post it.
     // This is just one simple example of what you might choose to do with
     // a GCM message.
     private void sendNotification(String msg) {
+
+        googleFitAPIHelper.buildFitnessClient(connectionCallbacks, onConnectionFailedListener);
+        if (!googleFitAPIHelper.isConnected()){
+            googleFitAPIHelper.connect();
+        }
+
         mNotificationManager = (NotificationManager)
                 this.getSystemService(Context.NOTIFICATION_SERVICE);
 
