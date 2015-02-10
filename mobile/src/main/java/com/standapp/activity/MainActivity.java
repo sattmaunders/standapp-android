@@ -8,9 +8,6 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -50,7 +47,6 @@ import com.standapp.activity.error.ChromeExtErrorActivity;
 import com.standapp.activity.error.GenericErrorActivity;
 import com.standapp.backend.UserHelper;
 import com.standapp.backend.UserHelperListener;
-import com.standapp.fragment.SuperAwesomeCardFragment;
 import com.standapp.google.GooglePlayServicesHelper;
 import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.gcm.GCMHelperListener;
@@ -157,31 +153,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Inject
     GCMHelper gcmHelper;
 
-    public class MyPagerAdapter extends FragmentPagerAdapter {
-
-        private final String[] TITLES = { "Categories", "Home", "Top Paid", "Top Free", "Top Grossing", "Top New Paid",
-                "Top New Free", "Trending" };
-
-        public MyPagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return TITLES[position];
-        }
-
-        @Override
-        public int getCount() {
-            return TITLES.length;
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            return SuperAwesomeCardFragment.newInstance(position);
-        }
-
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -194,11 +165,10 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
 
         // Initialize the ViewPager and set an adapter
-        pager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
+        pager.setAdapter(new PagerAdapter(getSupportFragmentManager()));
 
         // Bind the tabs to the ViewPager
         tabs.setViewPager(pager);
-
 
 
         context = getApplicationContext();
