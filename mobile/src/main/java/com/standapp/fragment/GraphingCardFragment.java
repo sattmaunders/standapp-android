@@ -24,7 +24,7 @@ import java.util.ArrayList;
 
 import javax.inject.Inject;
 /**
- * Created by Matt on 10/02/2015.
+ * Created by Matt on 10/02/2015. Fragment for graphs
  */
 public class GraphingCardFragment extends BaseActionBarFragment  {
 
@@ -58,15 +58,18 @@ public class GraphingCardFragment extends BaseActionBarFragment  {
         View rootView = inflater.inflate(R.layout.fragment_graphing_one, container, false);
 
         //Get linear layout containers:
-        LinearLayout graphOne = (LinearLayout) rootView.findViewById(R.id.graphOne);
-        LinearLayout graphTwo = (LinearLayout) rootView.findViewById(R.id.graphTwo);
+        //LinearLayout graphOne = (LinearLayout) rootView.findViewById(R.id.graphOne);
+        //LinearLayout graphTwo = (LinearLayout) rootView.findViewById(R.id.graphTwo);
+
         //Get charts:
         chartOne = (PieChart) rootView.findViewById(R.id.chartOne);
         chartTwo = (LineChart) rootView.findViewById(R.id.chartTwo);
 
+        //Set chart description/title thing
         chartOne.setDescription("Daily goal");
         chartTwo.setDescription("Week summary");
 
+        //Set chart data
         setDataLine(5,150);
         setDataPie(2,75);
 
@@ -75,12 +78,12 @@ public class GraphingCardFragment extends BaseActionBarFragment  {
 
     private void setDataLine(int count, float range) {
 
-        ArrayList<String> xVals = new ArrayList<String>(); //X axis label values
+        ArrayList<String> xVals = new ArrayList<String>();      //X axis label values
         for (int i = 0; i < count; i++) {
             xVals.add((i) + "");
         }
 
-        ArrayList<Entry> yVals = new ArrayList<Entry>(); //Values to diaply
+        ArrayList<Entry> yVals = new ArrayList<Entry>();        //Values to display
 
         for (int i = 0; i < count; i++) {
             float mult = (range + 1);
@@ -135,7 +138,7 @@ public class GraphingCardFragment extends BaseActionBarFragment  {
 
         float mult = range;
 
-        ArrayList<Entry> yVals1 = new ArrayList<Entry>(); //Values to display
+        ArrayList<Entry> yVals1 = new ArrayList<Entry>();       //Values to display
 
         // IMPORTANT: In a PieChart, no values (Entry) should have the same
         // xIndex (even if from different DataSets), since no values can be
@@ -144,7 +147,7 @@ public class GraphingCardFragment extends BaseActionBarFragment  {
             yVals1.add(new Entry((float) (Math.random() * mult) + mult / 5, i));
         }
 
-        ArrayList<String> xVals = new ArrayList<String>(); //Strings for labels
+        ArrayList<String> xVals = new ArrayList<String>();      //Strings for labels
 
         for (int i = 0; i < count + 1; i++)
             xVals.add("test");
