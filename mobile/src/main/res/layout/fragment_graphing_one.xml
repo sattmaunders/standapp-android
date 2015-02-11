@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:id="@+id/graphOne"
+        android:layout_weight="0.5">
+
+        <com.github.mikephil.charting.charts.PieChart
+            android:id="@+id/chartOne"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:id="@+id/graphTwo"
+        android:layout_weight="0.5">
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/chartTwo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        </LinearLayout>
+</LinearLayout>

@@ -17,6 +17,7 @@ import com.standapp.backend.BackendServer;
 import com.standapp.backend.UserHelper;
 import com.standapp.common.ForActivity;
 import com.standapp.common.ForApplication;
+import com.standapp.fragment.GraphingCardFragment;
 import com.standapp.fragment.SuperAwesomeCardFragment;
 import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.GooglePlayServicesHelper;
@@ -38,6 +39,7 @@ import dagger.Provides;
         injects = {
                 MainActivity.class,
                 SuperAwesomeCardFragment.class,
+                GraphingCardFragment.class,
                 ChromeExtErrorActivity.class,
                 GenericErrorActivity.class
         }
