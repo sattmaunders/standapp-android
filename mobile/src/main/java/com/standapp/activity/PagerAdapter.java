@@ -4,6 +4,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
+import com.standapp.fragment.GraphingCardFragment;
 import com.standapp.fragment.SuperAwesomeCardFragment;
 
 /**
@@ -11,8 +12,7 @@ import com.standapp.fragment.SuperAwesomeCardFragment;
  */
 public class PagerAdapter extends FragmentPagerAdapter {
 
-    private final String[] TITLES = { "Categories", "Home", "Top Paid", "Top Free", "Top Grossing", "Top New Paid",
-            "Top New Free", "Trending" };
+    private final String[] TITLES = { "Home","Graphs" };
 
     public PagerAdapter(FragmentManager fm) {
         super(fm);
@@ -30,7 +30,17 @@ public class PagerAdapter extends FragmentPagerAdapter {
 
     @Override
     public Fragment getItem(int position) {
-        return SuperAwesomeCardFragment.newInstance(position);
+        switch (position) {
+            case 0:
+                System.out.println("Pager Adapter: new SuperAwesomeCardFragment");
+                return SuperAwesomeCardFragment.newInstance(position);
+            case 1:
+                System.out.println("Pager Adapter: new GraphsBaseFragment");
+                return GraphingCardFragment.newInstance(position);
+            default:
+                System.out.println("Pager Adapter: new SuperAwesomeCardFragment");
+                return SuperAwesomeCardFragment.newInstance(position);
+        }
     }
 
 }
