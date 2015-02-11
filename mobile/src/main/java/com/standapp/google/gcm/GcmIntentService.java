@@ -18,21 +18,17 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.fitness.FitnessActivities;
 import com.google.android.gms.fitness.FitnessStatusCodes;
-import com.google.android.gms.fitness.data.DataPoint;
-import com.google.android.gms.fitness.data.DataSet;
 import com.google.android.gms.fitness.data.DataType;
-import com.google.android.gms.fitness.data.Field;
 import com.google.android.gms.fitness.data.Session;
-import com.google.android.gms.fitness.request.DataReadRequest;
-import com.google.android.gms.fitness.result.DataReadResult;
 import com.google.android.gms.fitness.result.SessionStopResult;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.standapp.R;
 import com.standapp.activity.MainActivity;
+import com.standapp.backend.BackendServer;
+import com.standapp.backend.StandAppMessages;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
 import com.standapp.logger.LogConstants;
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -46,27 +42,33 @@ import java.util.concurrent.TimeUnit;
  */
 public class GcmIntentService extends IntentService {
     public static final int NOTIFICATION_ID = 1;
+    public static final int NOTIFICATION_SESSION_ID = 187;
+    public static final String SESSION_WALKING_ID = "sa_walking_id";
+
     private static final String DATE_FORMAT = "yyyy.MM.dd G 'at' HH:mm:ss z";
-    private static final DataType TYPE_STEP_COUNT_CUMULATIVE = DataType.TYPE_STEP_COUNT_CUMULATIVE;
-    public static final String SA_WALKING_ID = "sa_walking_id";
+//    private static final DataType TYPE_STEP_COUNT_CUMULATIVE = DataType.TYPE_STEP_COUNT_CUMULATIVE;
+
     private NotificationManager mNotificationManager;
     private NotificationCompat.Builder builder;
     private GoogleFitAPIHelper googleFitAPIHelper;
-    private PendingIntent mainActivityContentIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
-    private String typeOfWork = null; // TODO js refactor to enum
+    private PendingIntent mainActivityContentIntent;
+    private StandAppMessages typeOfWork = null;
     private Intent receivedMsgIntent; // key for wakeelock
 
 
     public GcmIntentService() {
         super("GcmIntentService");
         googleFitAPIHelper = new GoogleFitAPIHelper(this);
-        mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
 
     @Override
     protected void onHandleIntent(Intent intent) {
         this.receivedMsgIntent = intent;
+
+        mainActivityContentIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
+        mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+
         Bundle extras = intent.getExtras();
         GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
         // The getMessageType() intent parameter must be the intent you received
@@ -85,15 +87,14 @@ public class GcmIntentService extends IntentService {
                 sendNotification("Deleted messages on server: " + extras.toString());
                 // If it's a regular GCM message, do some work.
             } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
-                // FIXME JS make enums and confirm API with @JB
                 Log.i(LogConstants.LOG_ID, "Received: " + extras.toString());
                 sendNotification("Received: " + extras.toString());
 
-                if (extras.getString("message").equalsIgnoreCase("startworkout")){
-                    setTypeOfWork("startworkout");
+                if (extras.getString(BackendServer.GCM_FIELD_MESSAGE_KEY).equalsIgnoreCase(StandAppMessages.BREAK_START.toString())){
+                    setTypeOfWork(StandAppMessages.BREAK_START);
                     initFitnessClientAndConnect();
-                } else if (extras.getString("message").equalsIgnoreCase("endworkout")){
-                    setTypeOfWork("startworkout");
+                } else if (extras.getString(BackendServer.GCM_FIELD_MESSAGE_KEY).equalsIgnoreCase(StandAppMessages.BREAK_END.toString())){
+                    setTypeOfWork(StandAppMessages.BREAK_END);
                     initFitnessClientAndConnect();
                 } else {
                     releaseWakeLock();
@@ -120,6 +121,12 @@ public class GcmIntentService extends IntentService {
         disconnectFitnessClient();
     }
 
+    private void unsubscribeFromSteps() {
+        unsubscribe(DataType.TYPE_STEP_COUNT_DELTA);
+        unsubscribe(DataType.TYPE_STEP_COUNT_CADENCE);
+        unsubscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
+    }
+
     private void disconnectFitnessClient() {
         if (googleFitAPIHelper.getClient().isConnected()) {
             googleFitAPIHelper.getClient().disconnect();
@@ -127,24 +134,24 @@ public class GcmIntentService extends IntentService {
     }
 
     private void endSession() {
-        PendingResult<SessionStopResult> pendingResult = Fitness.SessionsApi.stopSession(googleFitAPIHelper.getClient(), SA_WALKING_ID);
-        pendingResult.await();
+        PendingResult<SessionStopResult> pendingResult = Fitness.SessionsApi.stopSession(googleFitAPIHelper.getClient(), SESSION_WALKING_ID);
         // TODO check the result;
     }
 
     private void clearRecordingNotification() {
-        // TODO removed ungoing notification
+        mNotificationManager.cancel(NOTIFICATION_SESSION_ID);
     }
 
     private void initFitnessClientAndConnect() {
         googleFitAPIHelper.buildFitnessClient(connectionCallbacks, onConnectionFailedListener);
-        googleFitAPIHelper.connect();
+        if (!googleFitAPIHelper.isConnected() && !googleFitAPIHelper.isConnecting() ){
+            googleFitAPIHelper.connect();
+        }
     }
 
     private void createSession() {
         Session s = getBeginSession();
         PendingResult<Status> pendingResult = Fitness.SessionsApi.startSession(googleFitAPIHelper.getClient(), s);
-        pendingResult.await();
         // TODO check the result;
     }
 
@@ -155,7 +162,7 @@ public class GcmIntentService extends IntentService {
         // TODO refactor these into constants
         return new Session.Builder()
                     .setName("sa_walking")
-                    .setIdentifier(SA_WALKING_ID)
+                    .setIdentifier(SESSION_WALKING_ID)
                     .setDescription("StandApp walking")
                     .setStartTime(cal.getTimeInMillis(), TimeUnit.MILLISECONDS)
                     // optional - if your app knows what activity:
@@ -166,6 +173,18 @@ public class GcmIntentService extends IntentService {
 
     private void createRecordingNotification() {
         // inform user with ongoing notification that session is being recorded.
+        String msg = getResources().getString(R.string.notif_in_session_msg);
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.sa_ic_applauncher)
+                        .setContentTitle(getResources().getString(R.string.notif_in_session_title))
+                        .setStyle(new NotificationCompat.BigTextStyle()
+                                .bigText(msg))
+                        .setOngoing(true)
+                        .setContentText(msg);
+
+        mBuilder.setContentIntent(mainActivityContentIntent); // FIXME JS Send msg to end request? @JB
+        mNotificationManager.notify(NOTIFICATION_SESSION_ID, mBuilder.build());
     }
 
 
@@ -175,11 +194,11 @@ public class GcmIntentService extends IntentService {
         public void onConnected(Bundle bundle) {
             Log.i(LogConstants.LOG_ID, "Google Fit connected");
 
-            if (typeOfWork == "startworkout") {
+            if (typeOfWork == StandAppMessages.BREAK_START) {
                 startWorkout();
                 // TODO js sleep this thread for and end workout if it goes to long or
                 // TODO js let user tap to kill workout session
-            } else if (typeOfWork == "endworkout") {
+            } else if (typeOfWork == StandAppMessages.BREAK_END) {
                 endWorkout();
             }
 
@@ -214,7 +233,7 @@ public class GcmIntentService extends IntentService {
     private void sendNotification(String msg) {
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.sa_ic_applauncher)
+                        .setSmallIcon(R.drawable.common_ic_googleplayservices)
                         .setContentTitle("GCM Notification")
                         .setStyle(new NotificationCompat.BigTextStyle()
                                 .bigText(msg))
@@ -228,7 +247,7 @@ public class GcmIntentService extends IntentService {
         String msg = getResources().getString(R.string.notif_oauth_msg);
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.sa_ic_applauncher)
+                        .setSmallIcon(R.drawable.common_signin_btn_icon_disabled_dark)
                         .setContentTitle(getResources().getString(R.string.notif_oauth_title))
                         .setStyle(new NotificationCompat.BigTextStyle()
                                 .bigText(msg))
@@ -238,53 +257,15 @@ public class GcmIntentService extends IntentService {
         mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
     }
 
-    private void readSteps() {
-        // Setting a start and end date using a range of 1 week before this moment.
-        Calendar cal = Calendar.getInstance();
-        Date now = new Date();
-        cal.setTime(now);
-        long endTime = cal.getTimeInMillis();
-        cal.add(Calendar.MINUTE, -1);
-        long startTime = cal.getTimeInMillis();
-
-        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
-        Log.i(LogConstants.LOG_ID, "Range Start: " + dateFormat.format(startTime));
-        Log.i(LogConstants.LOG_ID, "Range End: " + dateFormat.format(endTime));
-
-        DataReadRequest readRequest = new DataReadRequest.Builder()
-                // The data request can specify multiple data types to return, effectively
-                // combining multiple data queries into one call.
-                // In this example, it's very unlikely that the request is for several hundred
-                // datapoints each consisting of a few steps and a timestamp.  The more likely
-                // scenario is wanting to see how many steps were walked per day, for 7 days.
-                .read(TYPE_STEP_COUNT_CUMULATIVE)
-                .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
-                .build();
-
-        DataReadResult dataReadResult =
-                Fitness.HistoryApi.readData(googleFitAPIHelper.getClient(), readRequest).await(1, TimeUnit.MINUTES);
-        dumpDataSet(dataReadResult.getDataSet(TYPE_STEP_COUNT_CUMULATIVE));
-    }
-
-    private void dumpDataSet(DataSet dataSet) {
-        Log.i(LogConstants.LOG_ID, "Data returned for Data type: " + dataSet.getDataType().getName());
-        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
-
-        for (DataPoint dp : dataSet.getDataPoints()) {
-            Log.i(LogConstants.LOG_ID, "Data point:");
-            Log.i(LogConstants.LOG_ID, "\tType: " + dp.getDataType().getName());
-            Log.i(LogConstants.LOG_ID, "\tStart: " + dateFormat.format(dp.getStartTime(TimeUnit.MILLISECONDS)));
-            Log.i(LogConstants.LOG_ID, "\tEnd: " + dateFormat.format(dp.getEndTime(TimeUnit.MILLISECONDS)));
-            for (Field field : dp.getDataType().getFields()) {
-                Log.i(LogConstants.LOG_ID, "\tField: " + field.getName() +
-                        " Value: " + dp.getValue(field));
-            }
-        }
-    }
 
     private void subscribeToSteps() {
-        PendingResult<Status> statusPendingResult = Fitness.RecordingApi.subscribe(googleFitAPIHelper.getClient(), TYPE_STEP_COUNT_CUMULATIVE);
-        statusPendingResult.await();
+        subscribe(DataType.TYPE_STEP_COUNT_DELTA);
+        subscribe(DataType.TYPE_STEP_COUNT_CADENCE);
+        subscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
+    }
+
+    private void subscribe(DataType dataType) {
+        PendingResult<Status> statusPendingResult = Fitness.RecordingApi.subscribe(googleFitAPIHelper.getClient(), dataType);
         statusPendingResult
                 .setResultCallback(new ResultCallback<Status>() {
                     @Override
@@ -303,23 +284,22 @@ public class GcmIntentService extends IntentService {
                 });
     }
 
-    private void unsubscribeFromSteps() {
-        PendingResult<Status> unsubscribe = Fitness.RecordingApi.unsubscribe(googleFitAPIHelper.getClient(), TYPE_STEP_COUNT_CUMULATIVE);
-        unsubscribe.await();
+    private void unsubscribe(final DataType dataType) {
+        PendingResult<Status> unsubscribe = Fitness.RecordingApi.unsubscribe(googleFitAPIHelper.getClient(), dataType);
         unsubscribe.setResultCallback(new ResultCallback<Status>() {
                     @Override
                     public void onResult(Status status) {
                         if (status.isSuccess()) {
-                            Log.i(LogConstants.LOG_ID, "Successfully unsubscribed for data type: " + TYPE_STEP_COUNT_CUMULATIVE.getName());
+                            Log.i(LogConstants.LOG_ID, "Successfully unsubscribed for data type: " + dataType.getName());
                         } else {
                             // Subscription not removed
-                            Log.i(LogConstants.LOG_ID, "Failed to unsubscribe for data type: " + TYPE_STEP_COUNT_CUMULATIVE.getName());
+                            Log.i(LogConstants.LOG_ID, "Failed to unsubscribe for data type: " + dataType.getName());
                         }
                     }
                 });
     }
 
-    public void setTypeOfWork(String typeOfWork) {
+    public void setTypeOfWork(StandAppMessages typeOfWork) {
         // tODO should be enum
         this.typeOfWork = typeOfWork;
     }

@@ -19,5 +19,7 @@
 
     <string name="notif_oauth_title">Problem connecting to Google Fit</string>
     <string name="notif_oauth_msg">Tap here to authenticate with Google Fit</string>
+    <string name="notif_in_session_msg">Tracking your activity...</string>
+    <string name="notif_in_session_title">Tracking your activity</string>
 
 </resources>

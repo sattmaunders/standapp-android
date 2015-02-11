@@ -32,8 +32,8 @@ public class UserInfo {
                 break;
             }
         }
-        return "john.sintal@gmail.com";
-//        return gmail;
+//        return "john.sintal@gmail.com";
+        return gmail;
     }
 
 
