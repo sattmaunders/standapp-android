@@ -3,8 +3,6 @@ package com.standapp.common;
 import android.content.Context;
 import android.location.LocationManager;
 
-import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
-
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -37,13 +35,6 @@ public class AndroidAppModule {
     @Provides @Singleton
     LocationManager provideLocationManager() {
         return (LocationManager) sApplicationContext.getSystemService(Context.LOCATION_SERVICE);
-    }
-
-
-    // TODO JS move to activity scope?
-    @Provides
-    GoogleFitAPIHelper provideGoogleFitAPIHelper(@ForApplication Context context) {
-        return new GoogleFitAPIHelper(context);
     }
 
 }
