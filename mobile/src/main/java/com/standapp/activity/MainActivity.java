@@ -44,6 +44,7 @@ import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
 import com.standapp.logger.LogConstants;
 import com.standapp.util.UserInfo;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -610,6 +611,13 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
         if (googlePlayServicesHelper.checkPlayServices(this)) {
             try {
+                JSONArray keyArry = user.getJSONObject("config").getJSONArray("gcmKeys");
+                String lastGcmKey = null;
+                if (keyArry.length() > 0) {
+                    // FIXME JS @JB we need  a way to make sure we get the right key
+                    lastGcmKey = keyArry.getString(keyArry.length() - 1);
+                }
+
                 gcmHelper.init(this, user.getString("_id"));
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -628,6 +636,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     public void onUserNotFound(String userEmail) {
         logMsg("user not found " + userEmail);
+        gcmHelper.clearRegId();
         startChromeExtensionErrorActivity();
     }
 
