@@ -1,7 +1,6 @@
 package com.standapp.fragment;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -11,11 +10,19 @@ import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 import android.widget.TextView;
 
-public class SuperAwesomeCardFragment extends Fragment {
+import com.standapp.common.BaseActionBarFragment;
+import com.standapp.util.UserInfo;
+
+import javax.inject.Inject;
+
+public class SuperAwesomeCardFragment extends BaseActionBarFragment {
 
     private static final String ARG_POSITION = "position";
 
     private int position;
+
+    @Inject
+    UserInfo userInfo;
 
     public static SuperAwesomeCardFragment newInstance(int position) {
         SuperAwesomeCardFragment f = new SuperAwesomeCardFragment();
@@ -31,6 +38,10 @@ public class SuperAwesomeCardFragment extends Fragment {
 
         position = getArguments().getInt(ARG_POSITION);
     }
+
+
+
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

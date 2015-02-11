@@ -11,6 +11,8 @@ import com.standapp.common.AndroidAppModule;
 import com.standapp.common.ForApplication;
 import com.standapp.util.UserInfo;
 
+import javax.inject.Singleton;
+
 import dagger.Module;
 import dagger.Provides;
 
@@ -34,6 +36,7 @@ public class StandAppScopeModule {
     }
 
     @Provides
+    @Singleton
     UserInfo provideUserInfo(@ForApplication Context context){
         return new UserInfo(context);
     }

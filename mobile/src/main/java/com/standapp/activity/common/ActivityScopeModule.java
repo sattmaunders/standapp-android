@@ -17,6 +17,7 @@ import com.standapp.backend.BackendServer;
 import com.standapp.backend.UserHelper;
 import com.standapp.common.ForActivity;
 import com.standapp.common.ForApplication;
+import com.standapp.fragment.SuperAwesomeCardFragment;
 import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.GooglePlayServicesHelper;
 import com.standapp.preferences.PreferenceAccess;
@@ -36,6 +37,7 @@ import dagger.Provides;
         addsTo = StandAppScopeModule.class, // Important for object graph validation at compile time
         injects = {
                 MainActivity.class,
+                SuperAwesomeCardFragment.class,
                 ChromeExtErrorActivity.class,
                 GenericErrorActivity.class
         }

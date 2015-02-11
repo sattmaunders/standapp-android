@@ -16,14 +16,18 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.Fitness;
+import com.google.android.gms.fitness.FitnessStatusCodes;
 import com.google.android.gms.fitness.data.DataPoint;
+import com.google.android.gms.fitness.data.DataSet;
 import com.google.android.gms.fitness.data.DataSource;
 import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Field;
 import com.google.android.gms.fitness.data.Value;
+import com.google.android.gms.fitness.request.DataReadRequest;
 import com.google.android.gms.fitness.request.DataSourcesRequest;
 import com.google.android.gms.fitness.request.OnDataPointListener;
 import com.google.android.gms.fitness.request.SensorRequest;
+import com.google.android.gms.fitness.result.DataReadResult;
 import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.standapp.R;
@@ -31,6 +35,9 @@ import com.standapp.activity.MainActivity;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
 import com.standapp.logger.LogConstants;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,6 +49,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class GcmIntentService extends IntentService {
     public static final int NOTIFICATION_ID = 1;
+    private static final String DATE_FORMAT = "yyyy.MM.dd G 'at' HH:mm:ss z";
     private NotificationManager mNotificationManager;
     NotificationCompat.Builder builder;
     private GoogleFitAPIHelper googleFitAPIHelper;
@@ -77,14 +85,14 @@ public class GcmIntentService extends IntentService {
                 // If it's a regular GCM message, do some work.
             } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
                 // This loop represents the service doing some work.
-                for (int i = 0; i < 5; i++) {
-                    Log.i(LogConstants.LOG_ID, "Working... " + (i + 1)
-                            + "/5 @ " + SystemClock.elapsedRealtime());
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                    }
-                }
+//                for (int i = 0; i < 5; i++) {
+//                    Log.i(LogConstants.LOG_ID, "Working... " + (i + 1)
+//                            + "/5 @ " + SystemClock.elapsedRealtime());
+//                    try {
+//                        Thread.sleep(5000);
+//                    } catch (InterruptedException e) {
+//                    }
+//                }
                 Log.i(LogConstants.LOG_ID, "Completed work @ " + SystemClock.elapsedRealtime());
                 // Post notification of received message.
                 sendNotification("Received: " + extras.toString());
@@ -92,7 +100,7 @@ public class GcmIntentService extends IntentService {
             }
         }
         // Release the wake lock provided by the WakefulBroadcastReceiver.
-//        GcmBroadcastReceiver.completeWakefulIntent(intent);
+        GcmBroadcastReceiver.completeWakefulIntent(intent);
     }
 
 
@@ -138,7 +146,10 @@ public class GcmIntentService extends IntentService {
             googleFitAPIHelper.connect();
         }
 
-        findFitnessDataSources();
+//        findFitnessDataSources();
+        recordSteps();
+        readSteps();
+
 
         mNotificationManager = (NotificationManager)
                 this.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -158,6 +169,68 @@ public class GcmIntentService extends IntentService {
         mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
     }
 
+    private void readSteps() {
+        // Setting a start and end date using a range of 1 week before this moment.
+        Calendar cal = Calendar.getInstance();
+        Date now = new Date();
+        cal.setTime(now);
+        long endTime = cal.getTimeInMillis();
+        cal.add(Calendar.MINUTE, -1);
+        long startTime = cal.getTimeInMillis();
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+        Log.i(LogConstants.LOG_ID, "Range Start: " + dateFormat.format(startTime));
+        Log.i(LogConstants.LOG_ID, "Range End: " + dateFormat.format(endTime));
+
+        DataReadRequest readRequest = new DataReadRequest.Builder()
+                // The data request can specify multiple data types to return, effectively
+                // combining multiple data queries into one call.
+                // In this example, it's very unlikely that the request is for several hundred
+                // datapoints each consisting of a few steps and a timestamp.  The more likely
+                // scenario is wanting to see how many steps were walked per day, for 7 days.
+                .read(DataType.TYPE_STEP_COUNT_CUMULATIVE)
+                .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
+                .build();
+
+        DataReadResult dataReadResult =
+                Fitness.HistoryApi.readData(googleFitAPIHelper.getClient(), readRequest).await(1, TimeUnit.MINUTES);
+        dumpDataSet(dataReadResult.getDataSet(DataType.TYPE_STEP_COUNT_CUMULATIVE));
+    }
+    
+    private void dumpDataSet(DataSet dataSet) {
+        Log.i(LogConstants.LOG_ID, "Data returned for Data type: " + dataSet.getDataType().getName());
+        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+
+        for (DataPoint dp : dataSet.getDataPoints()) {
+            Log.i(LogConstants.LOG_ID, "Data point:");
+            Log.i(LogConstants.LOG_ID, "\tType: " + dp.getDataType().getName());
+            Log.i(LogConstants.LOG_ID, "\tStart: " + dateFormat.format(dp.getStartTime(TimeUnit.MILLISECONDS)));
+            Log.i(LogConstants.LOG_ID, "\tEnd: " + dateFormat.format(dp.getEndTime(TimeUnit.MILLISECONDS)));
+            for(Field field : dp.getDataType().getFields()) {
+                Log.i(LogConstants.LOG_ID, "\tField: " + field.getName() +
+                        " Value: " + dp.getValue(field));
+            }
+        }
+    }
+
+    private void recordSteps() {
+        Fitness.RecordingApi.subscribe(googleFitAPIHelper.getClient(), DataType.TYPE_STEP_COUNT_CUMULATIVE)
+                .setResultCallback(new ResultCallback<Status>() {
+                    @Override
+                    public void onResult(Status status) {
+                        if (status.isSuccess()) {
+                            if (status.getStatusCode()
+                                    == FitnessStatusCodes.SUCCESS_ALREADY_SUBSCRIBED) {
+                                Log.i(LogConstants.LOG_ID, "Existing subscription for activity detected.");
+                            } else {
+                                Log.i(LogConstants.LOG_ID, "Successfully subscribed!");
+                            }
+                        } else {
+                            Log.i(LogConstants.LOG_ID, "There was a problem subscribing.");
+                        }
+                    }
+                });
+    }
 
 
     /**

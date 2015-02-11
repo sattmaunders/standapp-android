@@ -42,6 +42,7 @@ import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.gcm.GCMHelperListener;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
 import com.standapp.logger.LogConstants;
+import com.standapp.util.UserInfo;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -91,6 +92,9 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
     @Inject
     GoogleFitAPIHelper googleFitAPIHelper;
+
+    @Inject
+    UserInfo userInfo;
 
 
 //    private GoogleApiClient mClient = null;
@@ -599,6 +603,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     // TODO pass in User POJO instead of JSONObject
     public void onUserExists(JSONObject user) {
+        userInfo.setUser(user);
         logMsg("user exists " + user.toString());
 
         this.user = user; //Store the user in MainActivity for later usage.
