@@ -95,18 +95,8 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         //Get linear layout containers:
         graphOne = (LinearLayout) rootView.findViewById(R.id.graphOne);
         graphTwo = (LinearLayout) rootView.findViewById(R.id.graphTwo);
-/*
-        //Get charts:
-        chartOne = (PieChart) rootView.findViewById(R.id.chartOne);
-        chartTwo = (LineChart) rootView.findViewById(R.id.chartTwo);
 
-        //Set chart description/title thing
-        chartOne.setDescription("Daily goal");
-        chartTwo.setDescription("Week summary");
-        chartOne.setValueTextColor(Color.BLACK);
-        chartTwo.setValueTextColor(Color.BLACK);
-        //user = userInfo.getUser();
-*/
+        //TODO: charts are not redrawn if orientation is changed - fix me
         if (user != null) {
             //Set chart data
             setDataLine(user);
@@ -208,79 +198,9 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         //set2.setDrawFilled(true); //fills underneath line
 
         dataSets.add(set2); // add the datasets
-/*
-        ArrayList<int[]>  tempArray = new ArrayList<>();
-        tempArray.add(bestSteps);
-        tempArray.add(previousWeekSteps);
-        tempArray.add(currentWeekSteps);
 
-        int indexTop = 0;
-        for (int[] i : tempArray) {
-            yVals.clear();
-            if (i.length > 0) {
-                int index = 0;
-                for (int j : i) {
-                    //System.out.println("Value: " + j);
-                    yVals.add(new Entry(j, index));
-                    index++;
-                }
-
-                System.out.println("yVals size; " + yVals.size());
-                for (Entry e : yVals) {
-                    System.out.println("yVals: " + e.toString());
-                }
-
-                // create a dataset and give it a type
-                LineDataSet set1 = new LineDataSet(yVals, "DataSet " + (indexTop + 1));
-                set1.setFillAlpha(110);
-                set1.setFillColor(Color.RED);
-
-                //set1.enableDashedLine(10f, 5f, 0f);
-                set1.setColor(colors[indexTop]);
-                set1.setCircleColor(colors[indexTop]);
-                set1.setLineWidth(2f);
-                set1.setCircleSize(4f);
-                set1.setFillAlpha(65);
-                set1.setFillColor(colors[indexTop]);
-                // set1.setShader(new LinearGradient(0, 0, 0, mChart.getHeight(),
-                // Color.BLACK, Color.WHITE, Shader.TileMode.MIRROR));
-
-                indexTop++;
-
-                for (Entry e : set1.getYVals()) {
-                    System.out.println("Entry in set1: " + e.toString());
-                }
-
-                dataSets.add(set1); // add the datasets
-
-                System.out.println("dataSets count: " + dataSets.size());
-                for (LineDataSet d : dataSets) {
-                    for (Entry e : d.getYVals()) {
-                        System.out.println("Entry in dataSets: " + e.toString());
-                    }
-                }
-            }
-
-        }
-*/
         // create a data object with the datasets
         LineData data = new LineData(xVals, dataSets);
-/*
-        LimitLine ll1 = new LimitLine(9000f);
-        ll1.setLineWidth(4f);
-        ll1.enableDashedLine(10f, 10f, 0f);
-        ll1.setDrawValue(true);
-        ll1.setLabelPosition(LimitLine.LimitLabelPosition.RIGHT);
-
-        LimitLine ll2 = new LimitLine(5000f);
-        ll2.setLineWidth(4f);
-        ll2.enableDashedLine(10f, 10f, 0f);
-        ll2.setDrawValue(true);
-        ll2.setLabelPosition(LimitLine.LimitLabelPosition.RIGHT);
-
-        data.addLimitLine(ll1);
-        data.addLimitLine(ll2);
-*/
 /*
         for (LineDataSet d : data.getDataSets()){
             System.out.println("LineDataSet d entry count: " + d.getEntryCount());
@@ -368,7 +288,7 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
                 curDaySteps = curWeekSteps[6];
                 break;
         }
-        curDaySteps = 600; //temporary number for example displays (today's steps are 0 in the JSON)
+        //curDaySteps = 600; //temporary number for example displays (today's steps are 0 in the JSON)
 
         System.out.println("Goal steps: " + dayGoalSteps + ", Today steps: " + curDaySteps);
 
@@ -386,22 +306,6 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         // add a lot of colors
 
         ArrayList<Integer> colors = new ArrayList<Integer>();
-/*
-        for (int c : ColorTemplate.VORDIPLOM_COLORS)
-            colors.add(c);
-
-        for (int c : ColorTemplate.JOYFUL_COLORS)
-            colors.add(c);
-
-        for (int c : ColorTemplate.COLORFUL_COLORS)
-            colors.add(c);
-
-        for (int c : ColorTemplate.LIBERTY_COLORS)
-            colors.add(c);
-
-        for (int c : ColorTemplate.PASTEL_COLORS)
-            colors.add(c);
-*/
         colors.add(ColorTemplate.getHoloBlue());
         colors.add(Color.GREEN);
 
@@ -428,7 +332,6 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
     @Override
     public void onUserUpdated(User user) {
         // Chart your data @MS WOOO WOOO //hell yeah!
-//        user.getBestBreaks();
         this.user = user;
         setDataLine(user);
         setDataPie(user);
