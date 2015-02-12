@@ -23,6 +23,7 @@ import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.GooglePlayServicesHelper;
 import com.standapp.preferences.PreferenceAccess;
 import com.standapp.util.UserInfo;
+import com.standapp.util.UserTransformer;
 
 import javax.inject.Singleton;
 
@@ -100,6 +101,11 @@ public class ActivityScopeModule {
     @Singleton
     UserHelper provideUserHelper(BackendServer backendServer, UserInfo userInfo) {
         return new UserHelper(backendServer, userInfo);
+    }
+
+    @Provides
+    UserTransformer provideUserTransformer() {
+        return new UserTransformer();
     }
 
 

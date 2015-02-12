@@ -8,6 +8,8 @@ import com.standapp.util.UserTransformer;
 
 import org.json.JSONObject;
 
+import javax.inject.Inject;
+
 /**
  * Created by SINTAJ2 on 2/7/2015.
  */
@@ -15,6 +17,8 @@ public class UserHelper {
 
     private BackendServer backendServer;
     private UserInfo userInfo;
+    @Inject
+    UserTransformer userTransformer;
 
     public UserHelper(BackendServer backendServer, UserInfo userInfo) {
         this.backendServer = backendServer;
@@ -30,7 +34,6 @@ public class UserHelper {
         Response.Listener<JSONObject> successListener = new Response.Listener<JSONObject>() {
             public void onResponse(JSONObject response) {
                 //Convert response to User object
-                UserTransformer userTransformer = new UserTransformer();
                 User user = userTransformer.buildUserObject(response);
                 userHelperListener.onUserExists(user);
             }
