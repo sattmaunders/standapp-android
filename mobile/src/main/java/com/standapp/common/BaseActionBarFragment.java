@@ -8,6 +8,8 @@ import android.support.v4.app.Fragment;
 
 /**
  * Base fragment which performs injection using the activity-scoped object graph
+ *
+ * TODO refactor with {@link com.standapp.common.BaseFragment}
  */
 public abstract class BaseActionBarFragment extends Fragment {
     @Override
@@ -15,6 +17,11 @@ public abstract class BaseActionBarFragment extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
+    /**
+     * To use injected values, we must make sure that the BaseActivity had been created
+     *
+     * @param savedInstanceState
+     */
     @Override
     public void onActivityCreated (Bundle savedInstanceState){
         super.onActivityCreated(savedInstanceState);

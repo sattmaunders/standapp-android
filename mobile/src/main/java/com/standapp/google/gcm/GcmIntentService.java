@@ -135,7 +135,11 @@ public class GcmIntentService extends IntentService {
 
     private void endSession() {
         PendingResult<SessionStopResult> pendingResult = Fitness.SessionsApi.stopSession(googleFitAPIHelper.getClient(), SESSION_WALKING_ID);
-        // TODO check the result;
+        pendingResult.setResultCallback(new ResultCallback<SessionStopResult>() {
+            @Override
+            public void onResult(SessionStopResult sessionStopResult) {
+                Log.i(LogConstants.LOG_ID, sessionStopResult.toString());
+            }});
     }
 
     private void clearRecordingNotification() {
@@ -152,7 +156,15 @@ public class GcmIntentService extends IntentService {
     private void createSession() {
         Session s = getBeginSession();
         PendingResult<Status> pendingResult = Fitness.SessionsApi.startSession(googleFitAPIHelper.getClient(), s);
-        // TODO check the result;
+        pendingResult.setResultCallback(new ResultCallback<Status>() {
+            @Override
+            public void onResult(Status status) {
+                if (status.isSuccess()) {
+                    Log.i(LogConstants.LOG_ID, "Successfully subscribed!");
+                } else {
+                    Log.i(LogConstants.LOG_ID, "There was a problem subscribing.");
+                }
+            }});
     }
 
     private Session getBeginSession() {
@@ -300,7 +312,6 @@ public class GcmIntentService extends IntentService {
     }
 
     public void setTypeOfWork(StandAppMessages typeOfWork) {
-        // tODO should be enum
         this.typeOfWork = typeOfWork;
     }
 

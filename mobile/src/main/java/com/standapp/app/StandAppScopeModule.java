@@ -7,6 +7,7 @@ package com.standapp.app;
 import android.content.Context;
 
 import com.standapp.annotations.GCMSenderID;
+import com.standapp.backend.UserInfoMediator;
 import com.standapp.common.AndroidAppModule;
 import com.standapp.common.ForApplication;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
@@ -45,6 +46,12 @@ public class StandAppScopeModule {
     @Provides
     GoogleFitAPIHelper provideGoogleFitAPIHelper(@ForApplication Context context) {
         return new GoogleFitAPIHelper(context);
+    }
+
+    @Provides
+    @Singleton
+    UserInfoMediator provideUserInfoMediator() {
+        return new UserInfoMediator();
     }
 
 }

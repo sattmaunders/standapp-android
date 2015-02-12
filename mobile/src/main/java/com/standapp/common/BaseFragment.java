@@ -15,6 +15,11 @@ public abstract class BaseFragment extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
+    /**
+     * To use injected values, we must make sure that the BaseActivity had been created
+     *
+     * @param savedInstanceState
+     */
     @Override
     public void onActivityCreated (Bundle savedInstanceState){
         super.onActivityCreated(savedInstanceState);
