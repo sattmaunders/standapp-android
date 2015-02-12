@@ -9,6 +9,7 @@ import android.content.Context;
 import com.standapp.annotations.GCMSenderID;
 import com.standapp.common.AndroidAppModule;
 import com.standapp.common.ForApplication;
+import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
 import com.standapp.util.UserInfo;
 
 import javax.inject.Singleton;
@@ -39,6 +40,11 @@ public class StandAppScopeModule {
     @Singleton
     UserInfo provideUserInfo(@ForApplication Context context){
         return new UserInfo(context);
+    }
+
+    @Provides
+    GoogleFitAPIHelper provideGoogleFitAPIHelper(@ForApplication Context context) {
+        return new GoogleFitAPIHelper(context);
     }
 
 }

@@ -222,4 +222,9 @@ public class GCMHelper {
     }
 
 
+    public boolean clearRegId() {
+        int appVersion = AppInfo.getAppVersion(activity);
+        Log.i(LogConstants.LOG_ID, "Clearing regId on app version " + appVersion);
+        return preferenceAccess.updateGCMRegistrationId(appVersion, "");
+    }
 }

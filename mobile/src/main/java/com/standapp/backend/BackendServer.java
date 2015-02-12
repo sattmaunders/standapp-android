@@ -19,6 +19,9 @@ public class BackendServer {
 
     public static final String SERVER_BASE_URL = "http://standapp-server.herokuapp.com";
 
+    public static final String GCM_FIELD_SENDER_ID = "senderId";
+    public static final String GCM_FIELD_MESSAGE_KEY = "messageKey";
+
     private static final String REST_USER = "user";
     private static final String REST_GCMKEY = "gcmKey";
 
