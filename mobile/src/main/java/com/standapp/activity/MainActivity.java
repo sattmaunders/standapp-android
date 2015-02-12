@@ -26,6 +26,9 @@ import com.astuetz.PagerSlidingTabStrip;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.fitness.data.DataSource;
 import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Value;
@@ -135,6 +138,11 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
         if (id == R.id.action_unregister_listener) {
 //            unregisterFitnessDataListener();
+            return true;
+        }
+
+        if (id == R.id.action_unregister_googlefitapi) {
+            PendingResult<Status> pendingResult = Fitness.ConfigApi.disableFit(googleFitAPIHelper.getClient());
             return true;
         }
 
