@@ -18,9 +18,11 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 import com.github.mikephil.charting.utils.LimitLine;
 import com.standapp.R;
 import com.standapp.common.BaseActionBarFragment;
+import com.standapp.util.User;
 import com.standapp.util.UserInfo;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import javax.inject.Inject;
 /**
@@ -37,6 +39,8 @@ public class GraphingCardFragment extends BaseActionBarFragment  {
 
     private PieChart chartOne;
     private LineChart chartTwo;
+
+    private User user;
 
     public static GraphingCardFragment newInstance(int position) {
         GraphingCardFragment f = new GraphingCardFragment();
@@ -69,9 +73,11 @@ public class GraphingCardFragment extends BaseActionBarFragment  {
         chartOne.setDescription("Daily goal");
         chartTwo.setDescription("Week summary");
 
+        //user = userInfo.getUser();
+
         //Set chart data
-        setDataLine(5,150);
-        setDataPie(2,75);
+        //setDataLine(5,150);
+        //setDataPie(user);
 
         return rootView;
     }
@@ -134,25 +140,53 @@ public class GraphingCardFragment extends BaseActionBarFragment  {
         chartTwo.setData(data);
     }
 
-    private void setDataPie(int count, float range) {
-
-        float mult = range;
+    private void setDataPie(User user) {
 
         ArrayList<Entry> yVals1 = new ArrayList<Entry>();       //Values to display
 
         // IMPORTANT: In a PieChart, no values (Entry) should have the same
         // xIndex (even if from different DataSets), since no values can be
         // drawn above each other.
-        for (int i = 0; i < count + 1; i++) {
-            yVals1.add(new Entry((float) (Math.random() * mult) + mult / 5, i));
-        }
 
         ArrayList<String> xVals = new ArrayList<String>();      //Strings for labels
 
-        for (int i = 0; i < count + 1; i++)
-            xVals.add("test");
+        int dayGoalSteps = user.getGoalDailySteps();
+        int[] curWeekSteps = user.getCurrentWeekSteps();
+        int curDaySteps = 0;
 
-        PieDataSet set1 = new PieDataSet(yVals1, "Election Results");
+        Calendar calendar = Calendar.getInstance();
+        int day = calendar.get(Calendar.DAY_OF_WEEK);    // Sunday, day=1... Saturday, day=7
+        switch (day) {
+            case Calendar.SUNDAY:
+                curDaySteps = curWeekSteps[0];
+                break;
+            case Calendar.MONDAY:
+                curDaySteps = curWeekSteps[1];
+                break;
+            case Calendar.TUESDAY:
+                curDaySteps = curWeekSteps[2];
+                break;
+            case Calendar.WEDNESDAY:
+                curDaySteps = curWeekSteps[3];
+                break;
+            case Calendar.THURSDAY:
+                curDaySteps = curWeekSteps[4];
+                break;
+            case Calendar.FRIDAY:
+                curDaySteps = curWeekSteps[5];
+                break;
+            case Calendar.SATURDAY:
+                curDaySteps = curWeekSteps[6];
+                break;
+        }
+
+        yVals1.add(new Entry(curDaySteps,0));
+        yVals1.add(new Entry(dayGoalSteps-curDaySteps,1));
+
+        xVals.add("Today's steps");
+        xVals.add("Steps to go");
+
+        PieDataSet set1 = new PieDataSet(yVals1, "Goal steps");
         set1.setSliceSpace(3f);
 
         // add a lot of colors

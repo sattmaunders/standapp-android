@@ -13,7 +13,7 @@ public class UserInfo {
 
 
     private Context context;
-    private JSONObject user;
+    private User user;
 
     public UserInfo(Context context) {
         this.context = context;
@@ -32,12 +32,14 @@ public class UserInfo {
                 break;
             }
         }
-//        return "john.sintal@gmail.com";
-        return gmail;
+        return "john.sintal@gmail.com";
+//        return gmail;
     }
 
 
-    public void setUser(JSONObject user) {
+    public void setUser(User user) {
         this.user = user;
     }
+
+    public User getUser() { return user; }
 }
