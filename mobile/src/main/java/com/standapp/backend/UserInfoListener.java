@@ -2,13 +2,11 @@ package com.standapp.backend;
 
 import com.standapp.util.User;
 
-import org.json.JSONObject;
-
 /**
- * Created by SINTAJ2 on 2/7/2015.
+ * Created by John on 2/12/2015.
  */
-public interface UserHelperListener {
-    public void onUserExists(User userEmail);
+public interface UserInfoListener {
+    public void onUserUpdated(User user);
     public void onEmailMissing(String userEmail);
     public void onUserNotFound(String userEmail);
 }

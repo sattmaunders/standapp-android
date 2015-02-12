@@ -9,14 +9,15 @@ import android.content.Context;
  */
 public class UserInfo {
 
-
     private Context context;
     private User user;
+    // TODO add timestamp so we refresh only X minutes?
 
     public UserInfo(Context context) {
         this.context = context;
     }
 
+    //FIXME handle multiple accounts
     public String getUserEmail(){
         AccountManager manager = (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
         Account[] list = manager.getAccounts();
@@ -34,10 +35,11 @@ public class UserInfo {
 //        return gmail;
     }
 
+    public User getUser() {
+        return user;
+    }
 
     public void setUser(User user) {
         this.user = user;
     }
-
-    public User getUser() { return user; }
 }

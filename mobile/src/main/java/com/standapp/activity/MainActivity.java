@@ -1,13 +1,8 @@
 package com.standapp.activity;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -16,12 +11,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.astuetz.PagerSlidingTabStrip;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -29,17 +18,14 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.Fitness;
-import com.google.android.gms.fitness.data.DataSource;
-import com.google.android.gms.fitness.data.DataType;
-import com.google.android.gms.fitness.data.Value;
-import com.google.android.gms.fitness.request.SensorRequest;
-import com.standapp.LockScreenActivity;
 import com.standapp.R;
 import com.standapp.activity.common.StandAppBaseActionBarActivity;
 import com.standapp.activity.error.ChromeExtErrorActivity;
 import com.standapp.activity.error.GenericErrorActivity;
 import com.standapp.backend.UserHelper;
-import com.standapp.backend.UserHelperListener;
+import com.standapp.backend.UserInfoListener;
+import com.standapp.backend.UserInfoMediator;
+import com.standapp.fragment.OnFragmentCreatedListener;
 import com.standapp.google.GooglePlayServicesHelper;
 import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.gcm.GCMHelperListener;
@@ -48,21 +34,16 @@ import com.standapp.logger.LogConstants;
 import com.standapp.util.User;
 import com.standapp.util.UserInfo;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import javax.inject.Inject;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 
-public class MainActivity extends StandAppBaseActionBarActivity implements GCMHelperListener, UserHelperListener {
+public class MainActivity extends StandAppBaseActionBarActivity implements GCMHelperListener, UserInfoListener, OnFragmentCreatedListener {
 
     // [START auth_variable_references]
     private static final int REQUEST_OAUTH = 1;
-    public static final String SERVER_BASE_URL = "http://standapp-2015.herokuapp.com";
 
     /**
      * Track whether an authorization activity is stacking over the current activity, i.e. when
@@ -71,15 +52,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
      */
     private static final String AUTH_PENDING = "auth_state_pending";
     private boolean authInProgress = false;
-    private boolean isLocked = false;
-    private boolean isReady = false;
-    private boolean isAway = false;
-
-
-    /**
-     * Tag used on log messages.
-     */
-    public static final String TAG = "StandApp";
 
     @InjectView(R.id.display)
     TextView mDisplay;
@@ -90,8 +62,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @InjectView(R.id.pager)
     ViewPager pager;
 
-    Context context;
-
     @Inject
     GooglePlayServicesHelper googlePlayServicesHelper;
 
@@ -99,23 +69,39 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     GoogleFitAPIHelper googleFitAPIHelper;
 
     @Inject
+    UserHelper userHelper;
+
+    @Inject
+    GCMHelper gcmHelper;
+
+    @Inject
     UserInfo userInfo;
 
+    @Inject
+    UserInfoMediator userInfoMediator;
 
-//    private GoogleApiClient mClient = null;
-    // [END auth_variable_references]
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        ButterKnife.inject(this);
 
-    // [START mListener_variable_reference]
-//    // Need to hold a reference to this listener, as it's passed into the "unregister"
-//    // method in order to stop all sensors from sending data to this listener.
-//    private OnDataPointListener mListener;
-    private boolean connectedToFitAPI = false;
-    private JSONObject user;
-    private User userObj;
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
-//    private boolean stepCounterListenerRegistered;
-    // [END mListener_variable_reference]
+        // Initialize the ViewPager and set an adapter
+        pager.setAdapter(new PagerAdapter(getSupportFragmentManager()));
 
+        // Bind the tabs to the ViewPager
+        tabs.setViewPager(pager);
+        userInfoMediator.registerUserInfoListener(this);
+
+        if (savedInstanceState != null) {
+            authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
+        }
+
+        googleFitAPIHelper.buildFitnessClient(connectionCallbacks, onConnectionFailedListener);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -149,13 +135,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         return super.onOptionsItemSelected(item);
     }
 
-
-    @Inject
-    UserHelper userHelper;
-
-    @Inject
-    GCMHelper gcmHelper;
-
     private GoogleApiClient.ConnectionCallbacks connectionCallbacks = new GoogleApiClient.ConnectionCallbacks() {
 
         @Override
@@ -176,7 +155,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         }
     };
 
-    GoogleApiClient.OnConnectionFailedListener onConnectionFailedListener = new GoogleApiClient.OnConnectionFailedListener() {
+    private GoogleApiClient.OnConnectionFailedListener onConnectionFailedListener = new GoogleApiClient.OnConnectionFailedListener() {
         @Override
         public void onConnectionFailed(ConnectionResult result) {
             Log.i(LogConstants.LOG_ID, "Connection failed. Cause: " + result.toString());
@@ -197,202 +176,10 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         }
     };
 
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        context = getApplicationContext();
-
-        setContentView(R.layout.activity_main);
-        ButterKnife.inject(this);
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        // Initialize the ViewPager and set an adapter
-        pager.setAdapter(new PagerAdapter(getSupportFragmentManager()));
-
-        // Bind the tabs to the ViewPager
-        tabs.setViewPager(pager);
-        userHelper.checkIfUserIsCreated(this);
-
-        if (savedInstanceState != null) {
-            authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
-        }
-
-        googleFitAPIHelper.buildFitnessClient(connectionCallbacks, onConnectionFailedListener);
-
-    }
-
-
     private void logMsg(String msg) {
         Log.d(LogConstants.LOG_ID, msg);
         mDisplay.append(msg + "\n");
     }
-
-
-    private void inquireStatusServerLoop() {
-        final Handler h = new Handler();
-        final int delay = 5000; //milliseconds
-
-        h.postDelayed(new Runnable() {
-            public void run() {
-                //do something
-                inquireStatusServer();
-                h.postDelayed(this, delay);
-            }
-        }, delay);
-    }
-
-    private void inquireStatusServer() {
-        // Every 5 sec, we ask server for status
-        // If True, then start workout (step counter)
-        // If False, stop the work out
-        RequestQueue queue = Volley.newRequestQueue(this);
-        String url = SERVER_BASE_URL + "/status";
-        Log.i(TAG, "Inquiring status of lock screen");
-
-        JsonObjectRequest stringRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                new Response.Listener<JSONObject>() {
-                    public void onResponse(JSONObject response) {
-                        Log.i(TAG, "Received response for status");
-                        boolean isServerLocked = false;
-                        boolean isServerAway = false;
-                        boolean isServerReady = false;
-
-                        try {
-                            isServerLocked = !response.getBoolean("unlocked");
-                            isServerAway = response.getBoolean("away");
-                            isServerReady = response.getBoolean("readyToUnlock");
-
-                            if (isAway != isServerAway) {
-                                Log.i(TAG, "Server away status has been changed to:" + isServerAway);
-                                isAway = isServerAway;
-
-                                if (isAway) {
-                                    // Sending notification to phone with options
-                                    askUserToLockScreen();
-                                }
-                            }
-
-                            if (isReady != isServerReady && isLocked) {
-                                isReady = isServerReady;
-
-                                if (isReady) {
-                                    Log.i(TAG, "User is ready to unlock screen");
-                                    tellUserHeCanGoBackToDesk();
-                                }
-                            }
-
-                            if (isLocked != isServerLocked && !isAway) {
-                                Log.i(TAG, "Server status has changed to:" + isServerLocked);
-                                isLocked = isServerLocked;
-
-                                if (isLocked) {
-                                    if (connectedToFitAPI) {
-                                        Log.i(TAG, "Queue notifications to watch.");
-                                        lockScreen();
-                                    } else if (!connectedToFitAPI) {
-                                        Log.i(TAG, "Not yet connected to FIT API... Unable to find fitness data sources");
-                                    }
-                                }
-                            }
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.i(TAG, "Failed response");
-            }
-        });
-        queue.add(stringRequest);
-    }
-
-    private void tellUserHeCanGoBackToDesk() {
-        Intent intent = new Intent(this, MainActivity.class);
-        PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
-
-        Notification noti = new Notification.Builder(this)
-                .setContentTitle("Mission Accomplished")
-                .setContentText("You can go back to your desktop").setSmallIcon(R.drawable.ic_mission_accomplished)
-                .setContentIntent(pIntent)
-                .setPriority(Notification.PRIORITY_HIGH)
-                .build();
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        // hide the notification after its selected
-        noti.flags |= Notification.FLAG_AUTO_CANCEL;
-        noti.defaults |= Notification.DEFAULT_SOUND;
-        noti.defaults |= Notification.DEFAULT_VIBRATE;
-
-        Log.i(TAG, "Sent notification to indicate the user can go back to desktop");
-        notificationManager.notify(0, noti);
-    }
-
-    private void lockScreen() {
-        sendNotificationOfLockedScreen();
-    }
-
-    private void sendNotificationOfLockedScreen() {
-        // Prepare intent which is triggered if the
-        // notification is selected
-
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.putExtra("doLock", true);
-        PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
-
-        // Build notification
-        // Actions are just fake
-        Notification noti = new Notification.Builder(this)
-                .setContentTitle("Screen locked!")
-                .setContentText("Start your workout now to unlock screen").setSmallIcon(R.drawable.ic_exercise)
-                .setContentIntent(pIntent)
-                .setPriority(Notification.PRIORITY_HIGH)
-                .addAction(R.drawable.ic_no, "Ignore", pIntent).build();
-//        noti.contentView.setImageViewResource(android.R.id.icon, R.drawable.ic_exercise);
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        // hide the notification after its selected
-        noti.flags |= Notification.FLAG_AUTO_CANCEL;
-        noti.defaults |= Notification.DEFAULT_SOUND;
-        noti.defaults |= Notification.DEFAULT_VIBRATE;
-
-        Log.i(TAG, "Sent notification that screen is locked");
-        notificationManager.notify(0, noti);
-    }
-
-    private void askUserToLockScreen() {
-        // Prepare intent which is triggered if the
-        // notification is selected
-
-        Intent intentMainActivity = new Intent(this, MainActivity.class);
-        PendingIntent pIntentMainActivity = PendingIntent.getActivity(this, 0, intentMainActivity, 0);
-
-        Intent intent = new Intent(this, LockScreenActivity.class);
-        PendingIntent lockScreenActivity = PendingIntent.getActivity(this, 0, intent, 0);
-
-        // Build notification
-        // Actions are just fake
-        Notification notification = new Notification.Builder(this)
-                .setContentTitle("Leaving your computer?")
-                .setContentText("Would you like to lock your computer.").setSmallIcon(R.drawable.ic_exercise)
-                .setContentIntent(lockScreenActivity)
-                .setPriority(Notification.PRIORITY_HIGH)
-                .addAction(R.drawable.ic_yes, "Yes", lockScreenActivity)
-                .addAction(R.drawable.ic_no, "No", pIntentMainActivity).build();
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        // hide the notification after its selected
-        notification.flags |= Notification.FLAG_AUTO_CANCEL;
-        notification.defaults |= Notification.DEFAULT_SOUND;
-        notification.defaults |= Notification.DEFAULT_VIBRATE;
-
-        Log.i(TAG, "Asked user to lock screen.");
-        notificationManager.notify(1, notification);
-    }
-
 
     @Override
     protected void onResume() {
@@ -405,7 +192,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     protected void onStart() {
         super.onStart();
         // Connect to the Fitness API
-        Log.i(TAG, "Connecting fitness api...");
+        Log.i(LogConstants.LOG_ID, "MainActivity:onStart Connecting fitness api...");
         googleFitAPIHelper.connect();
     }
 
@@ -438,133 +225,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     }
 
 
-    /**
-     * Find available data sources and attempt to register on a specific {@link DataType}.
-     * If the application cares about a data type but doesn't care about the source of the data,
-     * this can be skipped entirely, instead calling
-     * {@link com.google.android.gms.fitness.SensorsApi
-     * #register(GoogleApiClient, SensorRequest, DataSourceListener)},
-     * where the {@link SensorRequest} contains the desired data type.
-     */
-//    private void findFitnessDataSources() {
-//        // [START find_data_sources]
-//        Fitness.SensorsApi.findDataSources(mClient, new DataSourcesRequest.Builder()
-//                // At least one datatype must be specified.
-//                .setDataTypes(DataType.TYPE_STEP_COUNT_CUMULATIVE)
-//                        // Can specify whether data type is raw or derived.
-//                .setDataSourceTypes(DataSource.TYPE_RAW)
-//                .build())
-//                .setResultCallback(new ResultCallback<DataSourcesResult>() {
-//                    @Override
-//                    public void onResult(DataSourcesResult dataSourcesResult) {
-//                        Log.i(TAG, "Result: " + dataSourcesResult.getStatus().toString());
-//                        for (DataSource dataSource : dataSourcesResult.getDataSources()) {
-//                            Log.i(TAG, "Data source found: " + dataSource.toString());
-//                            Log.i(TAG, "Data Source type: " + dataSource.getDataType().getName());
-//
-//                            //Let's register a listener to receive Activity data!
-//                            if (dataSource.getDataType().equals(DataType.TYPE_STEP_COUNT_CUMULATIVE)
-//                                    && mListener == null) {
-//                                Log.i(TAG, "Data source for TYPE_STEP_COUNT_CUMULATIVE found!  Registering.");
-//                                registerFitnessDataListener(dataSource,
-//                                        DataType.TYPE_STEP_COUNT_CUMULATIVE);
-//                            }
-//                        }
-//                    }
-//                });
-//        // [END find_data_sources]
-//    }
-
-    /**
-     * Register a listener with the Sensors API for the provided {@link DataSource} and
-     * {@link DataType} combo.
-     */
-//    private void registerFitnessDataListener(DataSource dataSource, DataType dataType) {
-//        // [START register_data_listener]
-//        mListener = new OnDataPointListener() {
-//            @Override
-//            public void onDataPoint(DataPoint dataPoint) {
-//                for (Field field : dataPoint.getDataType().getFields()) {
-//                    Value val = dataPoint.getValue(field);
-//                    Log.i(TAG, "Detected DataPoint field: " + field.getName());
-//                    Log.i(TAG, "Detected DataPoint value: " + val);
-//
-//                    sendStepsToServer(val);
-//                }
-//            }
-//        };
-//
-//        Fitness.SensorsApi.add(
-//                mClient,
-//                new SensorRequest.Builder()
-//                        .setDataSource(dataSource) // Optional but recommended for custom data sets.
-//                        .setDataType(dataType) // Can't be omitted.
-//                        .setSamplingRate(3, TimeUnit.SECONDS)
-//                        .build(),
-//                mListener)
-//                .setResultCallback(new ResultCallback<Status>() {
-//                    @Override
-//                    public void onResult(Status status) {
-//                        if (status.isSuccess()) {
-//                            Log.i(TAG, "Listener registered!");
-//                        } else {
-//                            Log.i(TAG, "Listener not registered.");
-//                        }
-//                    }
-//                });
-//        // [END register_data_listener]
-//    }
-    private void sendStepsToServer(final Value val) {
-        RequestQueue queue = Volley.newRequestQueue(this);
-        String url = SERVER_BASE_URL + "/steps/" + val.toString();
-        Log.i(TAG, "Sending steps to server");
-
-        JsonObjectRequest stringRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                new Response.Listener<JSONObject>() {
-                    public void onResponse(JSONObject response) {
-                        Log.i(TAG, "Send steps to server " + val.toString());
-                    }
-
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.i(TAG, "Failed response");
-            }
-        });
-        queue.add(stringRequest);
-    }
-
-    /**
-     * Unregister the listener with the Sensors API.
-     */
-//    private void unregisterFitnessDataListener() {
-//        if (mListener == null) {
-//            // This code only activates one listener at a time.  If there's no listener, there's
-//            // nothing to unregister.
-//            return;
-//        }
-//
-//        // [START unregister_data_listener]
-//        // Waiting isn't actually necessary as the unregister call will complete regardless,
-//        // even if called from within onStop, but a callback can still be added in order to
-//        // inspect the results.
-//        Fitness.SensorsApi.remove(
-//                mClient,
-//                mListener)
-//                .setResultCallback(new ResultCallback<Status>() {
-//                    @Override
-//                    public void onResult(Status status) {
-//                        if (status.isSuccess()) {
-//                            Log.i(TAG, "Listener was removed!");
-//                        } else {
-//                            Log.i(TAG, "Listener was not removed.");
-//                        }
-//                    }
-//                });
-//        // [END unregister_data_listener]
-//    }
-
-
     // Send an upstream message.
     public void onClick(final View view) {
         if (view == findViewById(R.id.send)) {
@@ -577,6 +237,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        userInfoMediator.unregisterUserInfoListener(this);
     }
 
 
@@ -612,32 +273,16 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     }
 
     @Override
-    // TODO pass in User POJO instead of JSONObject
-    public void onUserExists(User user) {
-        userInfo.setUser(user);
+    public void onUserUpdated(User user) {
         logMsg("user exists " + user.toString());
 
-        this.userObj = user; //Store the user in MainActivity for later usage.
-
         if (googlePlayServicesHelper.checkPlayServices(this)) {
-            try {
-                //JSONArray keyArry = user.getJSONObject("config").getJSONArray("gcmKeys");
-                JSONArray keyArry = userObj.getKeyArr();
-                String lastGcmKey = null;
-                if (keyArry.length() > 0) {
-                    // FIXME JS @JB we need  a way to make sure we get the right key
-                    lastGcmKey = keyArry.getString(keyArry.length() - 1);
-                }
-
-                //gcmHelper.init(this, user.getString("_id"));
-                gcmHelper.init(this, userObj.get_id());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            gcmHelper.init(this, user.get_id());
         } else {
-            Log.i(TAG, "No valid Google Play Services APK found.");
+            Log.i(LogConstants.LOG_ID, "No valid Google Play Services APK found.");
             // TODO Throw exception
         }
+
     }
 
     @Override
@@ -660,5 +305,15 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         Intent intent = new Intent(this, classActivity);
         this.startActivity(intent);
         this.finish();
+    }
+
+    @Override
+    public void onFragmentCreated() {
+        // We don't want every child fragment to fetch user data all the time, just do it once and
+        // check the userinfo singleton.
+        if (userInfo.getUser() == null) {
+            // TODO js refresh user info every x minutes by looking at last refresh time, right now we only update once it's null
+            userHelper.getUserInfo();
+        }
     }
 }

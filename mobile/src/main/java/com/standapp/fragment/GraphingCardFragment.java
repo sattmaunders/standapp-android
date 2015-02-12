@@ -1,11 +1,11 @@
 package com.standapp.fragment;
 
+import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.PieChart;
@@ -17,9 +17,10 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.github.mikephil.charting.utils.LimitLine;
 import com.standapp.R;
+import com.standapp.backend.UserInfoListener;
+import com.standapp.backend.UserInfoMediator;
 import com.standapp.common.BaseActionBarFragment;
 import com.standapp.util.User;
-import com.standapp.util.UserInfo;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -28,19 +29,20 @@ import javax.inject.Inject;
 /**
  * Created by Matt on 10/02/2015. Fragment for graphs
  */
-public class GraphingCardFragment extends BaseActionBarFragment  {
+public class GraphingCardFragment extends BaseActionBarFragment implements UserInfoListener {
 
     private static final String ARG_POSITION = "position";
 
     private int position;
 
     @Inject
-    UserInfo userInfo;
+    UserInfoMediator userInfoMediator;
 
     private PieChart chartOne;
     private LineChart chartTwo;
 
     private User user;
+    private OnFragmentCreatedListener onFragmentCreatedListener;
 
     public static GraphingCardFragment newInstance(int position) {
         GraphingCardFragment f = new GraphingCardFragment();
@@ -53,9 +55,34 @@ public class GraphingCardFragment extends BaseActionBarFragment  {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         position = getArguments().getInt(ARG_POSITION);
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        userInfoMediator.unregisterUserInfoListener(this);
+    }
+
+
+    @Override
+    public void onActivityCreated (Bundle savedInstanceState){
+        super.onActivityCreated(savedInstanceState);
+        userInfoMediator.registerUserInfoListener(this);
+        onFragmentCreatedListener.onFragmentCreated();
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            onFragmentCreatedListener = (OnFragmentCreatedListener) activity;
+        } catch (ClassCastException e) {
+            // Ensure the parent activity implements this interface
+            throw new ClassCastException(activity.toString() + " must implement OnFragmentCreatedListener");
+        }
+    }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -222,4 +249,19 @@ public class GraphingCardFragment extends BaseActionBarFragment  {
     }
 
 
+    @Override
+    public void onUserUpdated(User user) {
+        // Chart your data @MS WOOO WOOO
+//        user.getBestBreaks();
+    }
+
+    @Override
+    public void onEmailMissing(String userEmail) {
+
+    }
+
+    @Override
+    public void onUserNotFound(String userEmail) {
+
+    }
 }

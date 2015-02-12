@@ -42,13 +42,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".LockScreenActivity"
-            android:label="LockScreen" >
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-            </intent-filter>
-        </activity>
-        <activity
             android:name=".activity.error.ChromeExtErrorActivity"
             android:label="@string/title_activity_chrome_ext_error" >
         </activity>

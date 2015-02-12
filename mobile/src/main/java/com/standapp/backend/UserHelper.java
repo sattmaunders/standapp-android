@@ -8,8 +8,6 @@ import com.standapp.util.UserTransformer;
 
 import org.json.JSONObject;
 
-import javax.inject.Inject;
-
 /**
  * Created by SINTAJ2 on 2/7/2015.
  */
@@ -18,24 +16,32 @@ public class UserHelper {
     private BackendServer backendServer;
     private UserInfo userInfo;
     private UserTransformer userTransformer;
+    private UserInfoMediator userInfoMediator;
 
-    public UserHelper(BackendServer backendServer, UserInfo userInfo, UserTransformer userTransformer) {
+    public UserHelper(BackendServer backendServer, UserInfo userInfo, UserTransformer userTransformer, UserInfoMediator userInfoMediator) {
         this.backendServer = backendServer;
         this.userInfo = userInfo;
         this.userTransformer = userTransformer;
+        this.userInfoMediator = userInfoMediator;
     }
 
-    public void checkIfUserIsCreated(final UserHelperListener userHelperListener) {
-        checkIfUserIsCreated(userInfo.getUserEmail(), userHelperListener);
+    public void getUserInfo() {
+        updateUser(userInfo.getUserEmail());
     }
 
-    public void checkIfUserIsCreated(final String userEmail, final UserHelperListener userHelperListener) {
+    /**
+     * Updates the {@link com.standapp.util.UserInfo} with user data and notifies listener
+     * that the user data is ready to party!
+     *
+     */
+    public void updateUser(final String userEmail) {
 
         Response.Listener<JSONObject> successListener = new Response.Listener<JSONObject>() {
             public void onResponse(JSONObject response) {
                 //Convert response to User object
                 User user = userTransformer.buildUserObject(response);
-                userHelperListener.onUserExists(user);
+                userInfo.setUser(user);
+                userInfoMediator.notifyUserInfoListenersUserInfoUpdated(user);
             }
         };
 
@@ -43,10 +49,10 @@ public class UserHelper {
             @Override
             public void onErrorResponse(VolleyError error) {
                 if (error.networkResponse.statusCode == 400) {
-                    userHelperListener.onEmailMissing(userEmail);
+                    userInfoMediator.notifyUserInfoListenersEmailMissing(userEmail);
                     // TODO JS throw exception b/c no email was created and report
                 } else if (error.networkResponse.statusCode == 404) {
-                    userHelperListener.onUserNotFound(userEmail);
+                    userInfoMediator.notifyUserInfoListenersUserNotFound(userEmail);
                 }
             }
         };
@@ -54,4 +60,5 @@ public class UserHelper {
         backendServer.getUserByEmail(userEmail, successListener, errorListener);
 
     }
+
 }

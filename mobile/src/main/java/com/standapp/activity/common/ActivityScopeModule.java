@@ -15,6 +15,7 @@ import com.standapp.activity.error.GenericErrorActivity;
 import com.standapp.app.StandAppScopeModule;
 import com.standapp.backend.BackendServer;
 import com.standapp.backend.UserHelper;
+import com.standapp.backend.UserInfoMediator;
 import com.standapp.common.ForActivity;
 import com.standapp.common.ForApplication;
 import com.standapp.fragment.GraphingCardFragment;
@@ -99,8 +100,8 @@ public class ActivityScopeModule {
 
     @Provides
     @Singleton
-    UserHelper provideUserHelper(BackendServer backendServer, UserInfo userInfo, UserTransformer userTransformer) {
-        return new UserHelper(backendServer, userInfo, userTransformer);
+    UserHelper provideUserHelper(BackendServer backendServer, UserInfo userInfo, UserTransformer userTransformer, UserInfoMediator userInfoMediator) {
+        return new UserHelper(backendServer, userInfo, userTransformer, userInfoMediator);
     }
 
     @Provides
