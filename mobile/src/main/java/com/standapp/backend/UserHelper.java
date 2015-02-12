@@ -17,12 +17,12 @@ public class UserHelper {
 
     private BackendServer backendServer;
     private UserInfo userInfo;
-    @Inject
-    UserTransformer userTransformer;
+    private UserTransformer userTransformer;
 
-    public UserHelper(BackendServer backendServer, UserInfo userInfo) {
+    public UserHelper(BackendServer backendServer, UserInfo userInfo, UserTransformer userTransformer) {
         this.backendServer = backendServer;
         this.userInfo = userInfo;
+        this.userTransformer = userTransformer;
     }
 
     public void checkIfUserIsCreated(final UserHelperListener userHelperListener) {

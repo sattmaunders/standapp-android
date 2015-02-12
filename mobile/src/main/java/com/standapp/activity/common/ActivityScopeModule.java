@@ -99,8 +99,8 @@ public class ActivityScopeModule {
 
     @Provides
     @Singleton
-    UserHelper provideUserHelper(BackendServer backendServer, UserInfo userInfo) {
-        return new UserHelper(backendServer, userInfo);
+    UserHelper provideUserHelper(BackendServer backendServer, UserInfo userInfo, UserTransformer userTransformer) {
+        return new UserHelper(backendServer, userInfo, userTransformer);
     }
 
     @Provides
