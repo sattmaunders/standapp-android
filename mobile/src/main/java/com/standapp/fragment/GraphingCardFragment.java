@@ -18,6 +18,7 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 import com.github.mikephil.charting.utils.LimitLine;
 import com.standapp.R;
 import com.standapp.common.BaseActionBarFragment;
+import com.standapp.util.User;
 import com.standapp.util.UserInfo;
 
 import java.util.ArrayList;
@@ -38,6 +39,8 @@ public class GraphingCardFragment extends BaseActionBarFragment  {
     private PieChart chartOne;
     private LineChart chartTwo;
 
+    private User user;
+
     public static GraphingCardFragment newInstance(int position) {
         GraphingCardFragment f = new GraphingCardFragment();
         Bundle b = new Bundle();
@@ -51,6 +54,8 @@ public class GraphingCardFragment extends BaseActionBarFragment  {
         super.onCreate(savedInstanceState);
 
         position = getArguments().getInt(ARG_POSITION);
+
+        user = userInfo.getUser();
     }
 
     @Override
