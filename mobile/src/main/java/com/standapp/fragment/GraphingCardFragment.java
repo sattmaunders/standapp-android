@@ -22,6 +22,7 @@ import com.standapp.util.User;
 import com.standapp.util.UserInfo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 
 import javax.inject.Inject;
@@ -82,59 +83,71 @@ public class GraphingCardFragment extends BaseActionBarFragment  {
         return rootView;
     }
 
-    private void setDataLine(int count, float range) {
+    private void setDataLine(User user) {
+/*
+        boolean confirmBreak, int breakFreq, int breakDur, int workStart, int workEnd,
+        boolean[] workDays, int goalDailySteps, int goalDailyOnFoot, int goalDailyBreaks,
+        int[] bestSteps, int[] bestOnFoot, int[] bestBreaks,
+        int[] previousWeekSteps, int[] previousWeekOnFoot, int[] previousWeekBreaks,
+        int[] currentWeekSteps, int[] currentWeekOnFoot, int[] currentWeekBreak,
+*/
+        int colorBest = Color.BLACK;
+        int colorPrevious = Color.BLUE;
+        int colorCurrent = Color.RED;
+
+        int[] colors = {0,colorBest, colorPrevious, colorCurrent};
 
         ArrayList<String> xVals = new ArrayList<String>();      //X axis label values
-        for (int i = 0; i < count; i++) {
-            xVals.add((i) + "");
-        }
-
         ArrayList<Entry> yVals = new ArrayList<Entry>();        //Values to display
 
-        for (int i = 0; i < count; i++) {
-            float mult = (range + 1);
-            float val = (float) (Math.random() * mult) + 3;// + (float)
-            // ((mult *
-            // 0.1) / 10);
-            yVals.add(new Entry(val, i));
+        ArrayList<LineDataSet> dataSets = new ArrayList<LineDataSet>();
+
+        String[] daysOfTheWeek = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday"};
+        xVals.addAll(Arrays.asList(daysOfTheWeek));
+
+        int[] bestSteps = user.getBestSteps();
+        int[] previousWeekSteps = user.getPreviousWeekSteps();
+        int[] currentWeekSteps = user.getCurrentWeekSteps();
+
+        ArrayList<int[]>  tempArray = new ArrayList<>();
+        tempArray.add(bestSteps);
+        tempArray.add(previousWeekSteps);
+        tempArray.add(currentWeekSteps);
+
+        int indexTop = 0;
+        for (int[] i : tempArray) {
+            int index = 0;
+            for (int j : i) {
+                yVals.add(new Entry(j,index));
+                index++;
+            }
+            // create a dataset and give it a type
+            LineDataSet set1 = new LineDataSet(yVals, "DataSet " + (indexTop+1));
+            // set1.setFillAlpha(110);
+            // set1.setFillColor(Color.RED);
+
+            // set the line to be drawn like this "- - - - - -"
+            set1.enableDashedLine(10f, 5f, 0f);
+            set1.setColor(colors[indexTop]);
+            set1.setCircleColor(colors[indexTop]);
+            set1.setLineWidth(1f);
+            set1.setCircleSize(4f);
+            set1.setFillAlpha(65);
+            set1.setFillColor(colors[indexTop]);
+            // set1.setShader(new LinearGradient(0, 0, 0, mChart.getHeight(),
+            // Color.BLACK, Color.WHITE, Shader.TileMode.MIRROR));
+
+            indexTop++;
+
+            dataSets.add(set1); // add the datasets
         }
 
-        // create a dataset and give it a type
-        LineDataSet set1 = new LineDataSet(yVals, "DataSet 1");
-        // set1.setFillAlpha(110);
-        // set1.setFillColor(Color.RED);
 
-        // set the line to be drawn like this "- - - - - -"
-        set1.enableDashedLine(10f, 5f, 0f);
-        set1.setColor(Color.BLACK);
-        set1.setCircleColor(Color.BLACK);
-        set1.setLineWidth(1f);
-        set1.setCircleSize(4f);
-        set1.setFillAlpha(65);
-        set1.setFillColor(Color.BLACK);
-        // set1.setShader(new LinearGradient(0, 0, 0, mChart.getHeight(),
-        // Color.BLACK, Color.WHITE, Shader.TileMode.MIRROR));
 
-        ArrayList<LineDataSet> dataSets = new ArrayList<LineDataSet>();
-        dataSets.add(set1); // add the datasets
+
 
         // create a data object with the datasets
         LineData data = new LineData(xVals, dataSets);
-
-        LimitLine ll1 = new LimitLine(130f);
-        ll1.setLineWidth(4f);
-        ll1.enableDashedLine(10f, 10f, 0f);
-        ll1.setDrawValue(true);
-        ll1.setLabelPosition(LimitLine.LimitLabelPosition.RIGHT);
-
-        LimitLine ll2 = new LimitLine(-30f);
-        ll2.setLineWidth(4f);
-        ll2.enableDashedLine(10f, 10f, 0f);
-        ll2.setDrawValue(true);
-        ll2.setLabelPosition(LimitLine.LimitLabelPosition.RIGHT);
-
-        data.addLimitLine(ll1);
-        data.addLimitLine(ll2);
 
         // set data
         chartTwo.setData(data);
