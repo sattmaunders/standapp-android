@@ -42,6 +42,7 @@ import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.gcm.GCMHelperListener;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
 import com.standapp.logger.LogConstants;
+import com.standapp.util.User;
 import com.standapp.util.UserInfo;
 
 import org.json.JSONArray;
@@ -107,6 +108,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 //    private OnDataPointListener mListener;
     private boolean connectedToFitAPI = false;
     private JSONObject user;
+    private User userObj;
 
 //    private boolean stepCounterListenerRegistered;
     // [END mListener_variable_reference]
@@ -603,22 +605,24 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
     @Override
     // TODO pass in User POJO instead of JSONObject
-    public void onUserExists(JSONObject user) {
+    public void onUserExists(User user) {
         userInfo.setUser(user);
         logMsg("user exists " + user.toString());
 
-        this.user = user; //Store the user in MainActivity for later usage.
+        this.userObj = user; //Store the user in MainActivity for later usage.
 
         if (googlePlayServicesHelper.checkPlayServices(this)) {
             try {
-                JSONArray keyArry = user.getJSONObject("config").getJSONArray("gcmKeys");
+                //JSONArray keyArry = user.getJSONObject("config").getJSONArray("gcmKeys");
+                JSONArray keyArry = userObj.getKeyArr();
                 String lastGcmKey = null;
                 if (keyArry.length() > 0) {
                     // FIXME JS @JB we need  a way to make sure we get the right key
                     lastGcmKey = keyArry.getString(keyArry.length() - 1);
                 }
 
-                gcmHelper.init(this, user.getString("_id"));
+                //gcmHelper.init(this, user.getString("_id"));
+                gcmHelper.init(this, userObj.get_id());
             } catch (JSONException e) {
                 e.printStackTrace();
             }

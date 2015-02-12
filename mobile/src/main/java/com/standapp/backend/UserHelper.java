@@ -2,7 +2,9 @@ package com.standapp.backend;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.standapp.util.User;
 import com.standapp.util.UserInfo;
+import com.standapp.util.UserTransformer;
 
 import org.json.JSONObject;
 
@@ -27,7 +29,10 @@ public class UserHelper {
 
         Response.Listener<JSONObject> successListener = new Response.Listener<JSONObject>() {
             public void onResponse(JSONObject response) {
-                userHelperListener.onUserExists(response);
+                //Convert response to User object
+                UserTransformer userTransformer = new UserTransformer();
+                User user = userTransformer.buildUserObject(response);
+                userHelperListener.onUserExists(user);
             }
         };
 

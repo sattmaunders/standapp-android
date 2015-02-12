@@ -1,5 +1,7 @@
 package com.standapp.util;
 
+import org.json.JSONArray;
+
 /**
  * Created by Matt on 11/02/2015. User object
  */
@@ -43,13 +45,17 @@ public class User {
     private int[] currentWeekOnFoot = new int[7];
     private int[] currentWeekBreak = new int[7];
 
+    private JSONArray keyArr;
+    private String _id;
+
 
     public User(
             boolean confirmBreak, int breakFreq, int breakDur, int workStart, int workEnd,
             boolean[] workDays, int goalDailySteps, int goalDailyOnFoot, int goalDailyBreaks,
             int[] bestSteps, int[] bestOnFoot, int[] bestBreaks,
             int[] previousWeekSteps, int[] previousWeekOnFoot, int[] previousWeekBreaks,
-            int[] currentWeekSteps, int[] currentWeekOnFoot, int[] currentWeekBreak
+            int[] currentWeekSteps, int[] currentWeekOnFoot, int[] currentWeekBreak,
+            JSONArray keyArr, String _id
             ) {
         this.confirmBreak = confirmBreak;
         this.breakFreq = breakFreq;
@@ -69,6 +75,8 @@ public class User {
         this.currentWeekSteps = currentWeekSteps;
         this.currentWeekOnFoot = currentWeekOnFoot;
         this.currentWeekBreak = currentWeekBreak;
+        this.keyArr = keyArr;
+        this._id = _id;
     }
 
     public boolean getConfirmBreak() { return confirmBreak; }
@@ -89,4 +97,6 @@ public class User {
     public int[] getCurrentWeekSteps() { return currentWeekSteps; }
     public int[] getCurrentWeekOnFoot() { return currentWeekOnFoot; }
     public int[] getCurrentWeekBreak() { return currentWeekBreak; }
+    public JSONArray getKeyArr() { return keyArr; }
+    public String get_id() { return _id; }
 }
