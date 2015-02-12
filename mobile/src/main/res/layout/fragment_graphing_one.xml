@@ -8,12 +8,13 @@
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:id="@+id/graphOne"
-        android:layout_weight="0.5">
+        android:layout_weight="0.5"
+        android:layout_margin="10dp">
 
-        <com.github.mikephil.charting.charts.PieChart
+<!--        <com.github.mikephil.charting.charts.PieChart
             android:id="@+id/chartOne"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent" /> -->
 
         </LinearLayout>
 
@@ -22,12 +23,13 @@
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:id="@+id/graphTwo"
-        android:layout_weight="0.5">
+        android:layout_weight="0.5"
+        android:layout_margin="10dp">
 
-        <com.github.mikephil.charting.charts.LineChart
+<!--        <com.github.mikephil.charting.charts.LineChart
             android:id="@+id/chartTwo"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent" /> -->
 
         </LinearLayout>
 </LinearLayout>
