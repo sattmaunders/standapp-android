@@ -212,7 +212,7 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         // set data
         chartTwo.setData(data);
 
-        chartTwo.setYRange(-400,chartTwo.getYMax()+ 100,false); //Set y bounds of chart - lines get cut off with cubic stuff without this
+        chartTwo.setYRange(-1000,chartTwo.getYMax()+ 100,false); //Set y bounds of chart - lines get cut off with cubic stuff without this
 
         chartTwo.setValueTextColor(Color.BLACK);
         //chartTwo.setDescription("Week summary");
@@ -288,12 +288,12 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
                 curDaySteps = curWeekSteps[6];
                 break;
         }
-        //curDaySteps = 600; //temporary number for example displays (today's steps are 0 in the JSON)
+        curDaySteps = 600; //temporary number for example displays (today's steps are 0 in the JSON)
 
         System.out.println("Goal steps: " + dayGoalSteps + ", Today steps: " + curDaySteps);
 
         yVals1.add(new Entry(curDaySteps,0));
-        yVals1.add(new Entry(dayGoalSteps-curDaySteps,1));
+        yVals1.add(new Entry(dayGoalSteps-curDaySteps,1)); // this needs to be fixed, since curDaySteps can be > dayGoalSteps
 
         xVals.add("Today's steps");
         xVals.add("Steps to goal");

@@ -96,6 +96,8 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         tabs.setViewPager(pager);
         userInfoMediator.registerUserInfoListener(this);
 
+        pager.setCurrentItem(1);
+
         if (savedInstanceState != null) {
             authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
         }
