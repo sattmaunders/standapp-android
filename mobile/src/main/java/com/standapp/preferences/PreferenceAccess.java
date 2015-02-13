@@ -15,6 +15,7 @@ public class PreferenceAccess {
     private static final String PROPERTY_REG_ID = "registration_id";
     private static final String PROPERTY_APP_VERSION = "appVersion";
     private static final String PROPERTY_LAST_FIT_SESSION_ID = "lastFitSessionId";
+    private static final String PROPERTY_USER_ACCOUNT = "userAccount";
 
     private Context context;
 
@@ -36,7 +37,6 @@ public class PreferenceAccess {
         return getSharedPreferences().getInt(PROPERTY_APP_VERSION, Integer.MIN_VALUE);
     }
 
-
     public String getGcmRegistrationId(){
         return getSharedPreferences().getString(PROPERTY_REG_ID, "");
     }
@@ -55,6 +55,16 @@ public class PreferenceAccess {
     public boolean updateLastFitSessionId(String sessionId) {
         SharedPreferences.Editor editor = getSharedPreferences().edit();
         editor.putString(PROPERTY_LAST_FIT_SESSION_ID, sessionId);
+        return editor.commit();
+    }
+
+    public String getUserAccount(){
+        return getSharedPreferences().getString(PROPERTY_USER_ACCOUNT, "");
+    }
+
+    public boolean updateUserAccount(String account) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putString(PROPERTY_USER_ACCOUNT, account);
         return editor.commit();
     }
 }

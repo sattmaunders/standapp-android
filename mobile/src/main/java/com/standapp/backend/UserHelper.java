@@ -25,16 +25,12 @@ public class UserHelper {
         this.userInfoMediator = userInfoMediator;
     }
 
-    public void getUserInfo() {
-        updateUser(userInfo.getUserEmail());
-    }
-
     /**
-     * Updates the {@link com.standapp.util.UserInfo} with user data and notifies listener
+     * Refreshes the {@link com.standapp.util.UserInfo} with user data and notifies listener
      * that the user data is ready to party!
      *
      */
-    public void updateUser(final String userEmail) {
+    public void refreshUser(final String userEmail) {
 
         Response.Listener<JSONObject> successListener = new Response.Listener<JSONObject>() {
             public void onResponse(JSONObject response) {
@@ -58,7 +54,5 @@ public class UserHelper {
         };
 
         backendServer.getUserByEmail(userEmail, successListener, errorListener);
-
     }
-
 }

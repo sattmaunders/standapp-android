@@ -75,7 +75,10 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
     public void onActivityCreated (Bundle savedInstanceState){
         super.onActivityCreated(savedInstanceState);
         userInfoMediator.registerUserInfoListener(this);
-        onFragmentCreatedListener.onFragmentCreated();
+        if (position == 0){
+            // Only call once, TODO confirm that the first one is called
+            onFragmentCreatedListener.onFragmentCreated();
+        }
     }
 
     @Override
@@ -400,7 +403,7 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
 
 
     @Override
-    public void onUserUpdated(User user) {
+    public void onUserRefreshed(User user) {
         // Chart your data @MS WOOO WOOO //hell yeah!
         this.user = user;
         setDataLine(user);

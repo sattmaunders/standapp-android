@@ -10,6 +10,7 @@ public class User {
     private boolean confirmBreak = false;
     private int breakFreq = 5;
     private int breakDur = 5;
+    private String email = null;
 
     //Time as int - a value between 0 and 1439 (the number of minutes in the day).
     //So noon would be represented as 720 (12 * 60);
@@ -99,4 +100,12 @@ public class User {
     public int[] getCurrentWeekBreak() { return currentWeekBreak; }
     public JSONArray getKeyArr() { return keyArr; }
     public String get_id() { return _id; }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
 }

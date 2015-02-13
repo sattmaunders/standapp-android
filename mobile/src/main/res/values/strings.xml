@@ -22,5 +22,6 @@
     <string name="notif_in_session_msg">Tracking your activity...</string>
     <string name="notif_in_session_title">Tracking your activity</string>
     <string name="action_unregister_googlefitapi">Disconnect app from Google Fit</string>
+    <string name="account_picker_msg">Select the account you used for the StandApp Chrome Extension.</string>
 
 </resources>

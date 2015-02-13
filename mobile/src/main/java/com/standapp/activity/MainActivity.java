@@ -1,5 +1,6 @@
 package com.standapp.activity;
 
+import android.accounts.AccountManager;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
@@ -31,6 +32,7 @@ import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.gcm.GCMHelperListener;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
 import com.standapp.logger.LogConstants;
+import com.standapp.preferences.PreferenceAccess;
 import com.standapp.util.User;
 import com.standapp.util.UserInfo;
 
@@ -39,7 +41,26 @@ import javax.inject.Inject;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
-
+/***
+ *
+ * Auth flow:
+ *
+ * .onStart --> googleFitAPIHelper.connect(); -> onFailure (start resolutions) || onConnect (*success*)
+ *
+ * .onResume -> userHelper.openChooseAccountDialog(this); ->
+ *              onActivityResult ->
+ *              userHelper.refreshUser(userAccount) ->
+ *              onUserRefreshed ->
+ *              gcmHelper.init(this, user.get_id()); ->
+ *              onRegisterSuccess/onAlreadyRegistered (*success*)
+ *
+ * .onFragmentCreated ->
+             * userHelper.refreshUser(userAccount) ->
+             * onUserRefreshed ->
+             * gcmHelper.init(this, user.get_id()); ->
+             * onRegisterSuccess/onAlreadyRegistered (*success*)
+ *
+ */
 public class MainActivity extends StandAppBaseActionBarActivity implements GCMHelperListener, UserInfoListener, OnFragmentCreatedListener {
 
     // [START auth_variable_references]
@@ -80,6 +101,9 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Inject
     UserInfoMediator userInfoMediator;
 
+    @Inject
+    PreferenceAccess preferenceAccess;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -89,11 +113,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // Initialize the ViewPager and set an adapter
-        pager.setAdapter(new PagerAdapter(getSupportFragmentManager()));
 
-        // Bind the tabs to the ViewPager
-        tabs.setViewPager(pager);
         userInfoMediator.registerUserInfoListener(this);
 
         pager.setCurrentItem(1);
@@ -102,7 +122,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         if (savedInstanceState != null) {
             authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
         }
-
         googleFitAPIHelper.buildFitnessClient(connectionCallbacks, onConnectionFailedListener);
     }
 
@@ -144,6 +163,14 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         public void onConnected(Bundle bundle) {
             Log.i(LogConstants.LOG_ID, "Google Fit connected");
             mDisplay.append("Google fit api connected!");
+
+            if (!preferenceAccess.getUserAccount().isEmpty()){
+                // Initialize the ViewPager and set an adapter
+                pager.setAdapter(new PagerAdapter(getSupportFragmentManager()));
+
+                // Bind the tabs to the ViewPager
+                tabs.setViewPager(pager);
+            }
         }
 
         @Override
@@ -214,9 +241,14 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             authInProgress = false;
             if (resultCode == RESULT_OK) {
                 // Make sure the app is not already connected or attempting to connect
+                String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+                preferenceAccess.updateUserAccount(accountName);
+
                 if (!googleFitAPIHelper.isConnecting() && !googleFitAPIHelper.isConnected()) {
                     googleFitAPIHelper.connect();
                 }
+            } else {
+                // TODO WTF
             }
         }
     }
@@ -276,8 +308,9 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     }
 
     @Override
-    public void onUserUpdated(User user) {
+    public void onUserRefreshed(User user) {
         logMsg("user exists " + user.toString());
+        preferenceAccess.updateUserAccount(user.getEmail());
 
         if (googlePlayServicesHelper.checkPlayServices(this)) {
             gcmHelper.init(this, user.get_id());
@@ -313,10 +346,10 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     public void onFragmentCreated() {
         // We don't want every child fragment to fetch user data all the time, just do it once and
-        // check the userinfo singleton.
-        if (userInfo.getUser() == null) {
-            // TODO js refresh user info every x minutes by looking at last refresh time, right now we only update once it's null
-            userHelper.getUserInfo();
+        String userAccount = preferenceAccess.getUserAccount();
+        if (!userAccount.isEmpty() && userInfo.getUser() == null){
+            userHelper.refreshUser(userAccount);
         }
     }
+
 }
