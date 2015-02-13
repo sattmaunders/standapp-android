@@ -122,8 +122,8 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         int[] currentWeekSteps, int[] currentWeekOnFoot, int[] currentWeekBreak,
 */
         int colorBest = Color.BLACK;
-        int colorPrevious = Color.GREEN;
-        int colorCurrent = Color.BLUE;
+        int colorPrevious = Color.parseColor("#2ecc71"); //Color.GREEN;
+        int colorCurrent = Color.parseColor("#2196f3");  //Color.BLUE;
 
 
         ArrayList<String> xVals = new ArrayList<String>();      //X axis label values
@@ -376,8 +376,10 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         // add a lot of colors
 
         ArrayList<Integer> colors = new ArrayList<Integer>();
-        colors.add(ColorTemplate.getHoloBlue());
-        colors.add(Color.GREEN);
+        //colors.add(ColorTemplate.getHoloBlue());
+        //colors.add(Color.GREEN);
+        colors.add(Color.parseColor("#2196f3"));
+        colors.add(Color.parseColor("#2ecc71"));
 
         set1.setColors(colors);
 
