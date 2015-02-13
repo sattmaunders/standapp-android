@@ -18,6 +18,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.Fitness;
 import com.standapp.R;
@@ -147,18 +148,15 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        if (id == R.id.action_unregister_listener) {
-//            unregisterFitnessDataListener();
-            return true;
-        }
 
         if (id == R.id.action_unregister_googlefitapi) {
             PendingResult<Status> pendingResult = Fitness.ConfigApi.disableFit(googleFitAPIHelper.getClient());
+            pendingResult.setResultCallback(new ResultCallback<Status>() {
+                @Override
+                public void onResult(Status status) {
+                    Log.i(LogConstants.LOG_ID, "Disconnect fit " + status.toString() + ", code " + status.getStatus().getStatusCode());
+                }
+            });
             return true;
         }
 
