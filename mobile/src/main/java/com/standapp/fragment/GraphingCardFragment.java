@@ -62,6 +62,7 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         position = getArguments().getInt(ARG_POSITION);
+        setRetainInstance(true);
     }
 
     @Override
@@ -102,13 +103,13 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         graphTwo = (LinearLayout) rootView.findViewById(R.id.graphTwo);
 
         //TODO: charts are not redrawn if orientation is changed - fix me
-        /*
+
         if (user != null) {
             //Set chart data
             setDataLine(user);
             setDataPie(user);
         }
-        */
+
 
         return rootView;
     }
