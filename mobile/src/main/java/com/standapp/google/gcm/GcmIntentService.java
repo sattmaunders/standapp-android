@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class GcmIntentService extends IntentService {
     public static final int NOTIFICATION_ID = 1;
-    public static final int NOTIFICATION_SESSION_ID = 187;
+    public static final int NOTIFICATION_SESSION_ID = 1872;
 
     private static final String DATE_FORMAT = "yyyy.MM.dd G 'at' HH:mm:ss z";
     private final PreferenceAccess preferenceAccess;
@@ -108,9 +108,7 @@ public class GcmIntentService extends IntentService {
              * not interested in, or that you don't recognize.
              */
                 if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
-                    sendNotification("Send error: " + extras.toString());
                 } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
-                    sendNotification("Deleted messages on server: " + extras.toString());
                     // If it's a regular GCM message, do some work.
                 } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType) && !messageOriginatedFromPhone(extras)) {
                     Log.i(LogConstants.LOG_ID, "Received: " + extras.toString());
@@ -187,20 +185,22 @@ public class GcmIntentService extends IntentService {
     private void endSessionAndCreateNewOne(String oldSessionId) {
         Log.i(LogConstants.LOG_ID, "Ending session (" + oldSessionId + ") and creating a new one");
 
-        PendingResult<SessionStopResult> pendingResult = Fitness.SessionsApi.stopSession(googleFitAPIHelper.getClient(), oldSessionId);
-        pendingResult.setResultCallback(new ResultCallback<SessionStopResult>() {
-            @Override
-            public void onResult(SessionStopResult sessionStopResult) {
-                Log.i(LogConstants.LOG_ID, "endSession toString: " + sessionStopResult.toString() + " endSession code " + sessionStopResult.getStatus().getStatusCode());
-                if (sessionStopResult.getSessions() != null && sessionStopResult.getSessions().size() > 0) {
-                    Log.i(LogConstants.LOG_ID, "Ended some session properly, # of sessions ended " + sessionStopResult.getSessions().size());
+        if (googleFitAPIHelper.isConnected()){
+            PendingResult<SessionStopResult> pendingResult = Fitness.SessionsApi.stopSession(googleFitAPIHelper.getClient(), oldSessionId);
+            pendingResult.setResultCallback(new ResultCallback<SessionStopResult>() {
+                @Override
+                public void onResult(SessionStopResult sessionStopResult) {
+                    Log.i(LogConstants.LOG_ID, "endSession toString: " + sessionStopResult.toString() + " endSession code " + sessionStopResult.getStatus().getStatusCode());
+                    if (sessionStopResult.getSessions() != null && sessionStopResult.getSessions().size() > 0) {
+                        Log.i(LogConstants.LOG_ID, "Ended some session properly, # of sessions ended " + sessionStopResult.getSessions().size());
+                    }
+                    if (preferenceAccess.updateLastFitSessionId("")) {
+                        Log.i(LogConstants.LOG_ID, "Updated session id preferences by clearing it");
+                        createSession();
+                    }
                 }
-                if (preferenceAccess.updateLastFitSessionId("")) {
-                    Log.i(LogConstants.LOG_ID, "Updated session id preferences by clearing it");
-                    createSession();
-                }
-            }
-        });
+            });
+        }
     }
 
 
@@ -242,7 +242,8 @@ public class GcmIntentService extends IntentService {
         Log.i(LogConstants.LOG_ID, "When creating session, the last session id: " + lastFitSessionId);
 
 
-        if (lastFitSessionId.isEmpty()) {
+        // FIXME make sure client is connected
+        if (lastFitSessionId.isEmpty() && googleFitAPIHelper.isConnected()) {
             PendingResult<Status> pendingResult = Fitness.SessionsApi.startSession(googleFitAPIHelper.getClient(), beginSession);
             pendingResult.setResultCallback(new ResultCallback<Status>() {
                 @Override
@@ -338,19 +339,6 @@ public class GcmIntentService extends IntentService {
             return;
         }
     };
-
-    private void sendNotification(String msg) {
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.common_ic_googleplayservices)
-                        .setContentTitle("GCM Notification")
-                        .setStyle(new NotificationCompat.BigTextStyle()
-                                .bigText(msg))
-                        .setContentText(msg);
-
-        mBuilder.setContentIntent(mainActivityContentIntent);
-        mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
-    }
 
     private void sendNotificationOAuthResolution() {
         String msg = getResources().getString(R.string.notif_oauth_msg);
