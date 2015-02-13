@@ -12,7 +12,7 @@ import com.standapp.fragment.SuperAwesomeCardFragment;
  */
 public class PagerAdapter extends FragmentPagerAdapter {
 
-    private final String[] TITLES = { "Home","Graphs" };
+    private final String[] TITLES = { "Steps", "Standing", "Breaks" }; //"Home",
 
     public PagerAdapter(FragmentManager fm) {
         super(fm);
@@ -32,15 +32,23 @@ public class PagerAdapter extends FragmentPagerAdapter {
     public Fragment getItem(int position) {
         switch (position) {
             case 0:
-                System.out.println("Pager Adapter: new SuperAwesomeCardFragment");
-                return SuperAwesomeCardFragment.newInstance(position);
+                System.out.println("Pager Adapter: new GraphsBaseFragment - Steps");
+                return GraphingCardFragment.newInstance(position);
             case 1:
-                System.out.println("Pager Adapter: new GraphsBaseFragment");
+                System.out.println("Pager Adapter: new GraphsBaseFragment - Standing");
+                return GraphingCardFragment.newInstance(position);
+            case 2:
+                System.out.println("Pager Adapter: new GraphsBaseFragment - Breaks");
                 return GraphingCardFragment.newInstance(position);
             default:
                 System.out.println("Pager Adapter: new SuperAwesomeCardFragment");
                 return SuperAwesomeCardFragment.newInstance(position);
         }
+        /*
+            case 0:
+                System.out.println("Pager Adapter: new SuperAwesomeCardFragment");
+                return SuperAwesomeCardFragment.newInstance(position);
+        */
     }
 
 }

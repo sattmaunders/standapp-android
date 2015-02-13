@@ -96,6 +96,9 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         tabs.setViewPager(pager);
         userInfoMediator.registerUserInfoListener(this);
 
+        pager.setCurrentItem(1);
+        pager.setOffscreenPageLimit(2); //never unload fragments, there's only 3 anyways
+
         if (savedInstanceState != null) {
             authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
         }
