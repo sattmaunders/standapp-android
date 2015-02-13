@@ -310,7 +310,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     public void onUserRefreshed(User user) {
         logMsg("user exists " + user.toString());
-        preferenceAccess.updateUserAccount(user.getEmail());
+        preferenceAccess.updateUserId(user.get_id());
 
         if (googlePlayServicesHelper.checkPlayServices(this)) {
             gcmHelper.init(this, user.get_id());

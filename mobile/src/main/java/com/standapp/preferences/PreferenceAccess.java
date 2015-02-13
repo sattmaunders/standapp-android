@@ -16,6 +16,7 @@ public class PreferenceAccess {
     private static final String PROPERTY_APP_VERSION = "appVersion";
     private static final String PROPERTY_LAST_FIT_SESSION_ID = "lastFitSessionId";
     private static final String PROPERTY_USER_ACCOUNT = "userAccount";
+    private static final String PROPERTY_USER_ID = "userId";
 
     private Context context;
 
@@ -65,6 +66,16 @@ public class PreferenceAccess {
     public boolean updateUserAccount(String account) {
         SharedPreferences.Editor editor = getSharedPreferences().edit();
         editor.putString(PROPERTY_USER_ACCOUNT, account);
+        return editor.commit();
+    }
+
+    public String getUserId() {
+        return getSharedPreferences().getString(PROPERTY_USER_ID, "");
+    }
+
+    public boolean updateUserId(String userId) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putString(PROPERTY_USER_ID, userId);
         return editor.commit();
     }
 }
