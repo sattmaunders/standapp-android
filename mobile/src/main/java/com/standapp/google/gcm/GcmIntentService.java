@@ -65,6 +65,13 @@ public class GcmIntentService extends IntentService {
     }
 
 
+
+    /**
+     * FIXME JS when is a better time to release the wakelock? maybe when the session has started for when
+     * it is a startEvent, and when session has ended when.
+     */
+
+
     @Override
     protected void onHandleIntent(Intent intent) {
         this.receivedMsgIntent = intent;
@@ -133,7 +140,7 @@ public class GcmIntentService extends IntentService {
 
     private void disconnectFitnessClient() {
         if (googleFitAPIHelper.getClient().isConnected()) {
-            googleFitAPIHelper.getClient().disconnect();
+//            googleFitAPIHelper.getClient().disconnect(); // fIXME do we really need to disconnect client? even at {@link MainActivity}
         }
     }
 
