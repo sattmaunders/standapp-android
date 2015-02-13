@@ -3,6 +3,7 @@ package com.standapp.fragment;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,6 +35,7 @@ import javax.inject.Inject;
 public class GraphingCardFragment extends BaseActionBarFragment implements UserInfoListener {
 
     private static final String ARG_POSITION = "position";
+    private static final String GRAPH_TAG = "GraphingFragment #";
 
     private int position;
 
@@ -97,11 +99,13 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         graphTwo = (LinearLayout) rootView.findViewById(R.id.graphTwo);
 
         //TODO: charts are not redrawn if orientation is changed - fix me
+        /*
         if (user != null) {
             //Set chart data
             setDataLine(user);
             setDataPie(user);
         }
+        */
 
         return rootView;
     }
@@ -130,23 +134,55 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
 
         xVals.addAll(Arrays.asList("Sun","Mon","Tue","Wed","Thur","Fri","Sat"));
 
-        int[] bestSteps = user.getBestSteps();
-        int[] previousWeekSteps = user.getPreviousWeekSteps();
-        int[] currentWeekSteps = user.getCurrentWeekSteps();
+        int[] best;
+        int[] previousWeek;
+        int[] currentWeek;
 
-        System.out.println(bestSteps.length + " | " + previousWeekSteps.length + " | " + currentWeekSteps.length);
+        switch(position) {
+            case 0:
+                //steps graphs
+                best = user.getBestSteps();
+                previousWeek = user.getPreviousWeekSteps();
+                currentWeek = user.getCurrentWeekSteps();
+                break;
+            case 1:
+                //standing graphs
+                best = user.getBestOnFoot();
+                previousWeek = user.getPreviousWeekOnFoot();
+                currentWeek = user.getCurrentWeekOnFoot();
+                break;
+            case 2:
+                //breaks graphs
+                best = user.getBestBreaks();
+                previousWeek = user.getPreviousWeekBreaks();
+                currentWeek = user.getCurrentWeekBreak();
+                break;
+            default:
+                //steps as default
+                best = user.getBestSteps();
+                previousWeek = user.getPreviousWeekSteps();
+                currentWeek = user.getCurrentWeekSteps();
+                break;
+        }
+/*
+        best = user.getBestSteps();
+        previousWeek = user.getPreviousWeekSteps();
+        currentWeek = user.getCurrentWeekSteps();
+*/
+
+        Log.i(GRAPH_TAG + position, "LineGraph: " + best.length + " | " + previousWeek.length + " | " + currentWeek.length);
         int index = 0;
-        for (int i : bestSteps) {
+        for (int i : best) {
             yVals.add(new Entry(i, index));
             index++;
         }
         index = 0;
-        for (int i : previousWeekSteps) {
+        for (int i : previousWeek) {
             yVals1.add(new Entry(i, index));
             index++;
         }
         index = 0;
-        for (int i : currentWeekSteps) {
+        for (int i : currentWeek) {
             yVals2.add(new Entry(i, index));
             index++;
         }
@@ -212,7 +248,10 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         // set data
         chartTwo.setData(data);
 
-        chartTwo.setYRange(-1000,chartTwo.getYMax()+ 100,false); //Set y bounds of chart - lines get cut off with cubic stuff without this
+        //Set y bounds of chart - lines get cut off with cubic stuff without this
+        //Weird behaviour - needs to be set to -1000 to prevent line from being cut off, but makes
+        //other charts look weird, especially if they have zero values
+        chartTwo.setYRange(-1000,(chartTwo.getYMax()+ 1000),false);
 
         chartTwo.setValueTextColor(Color.BLACK);
         //chartTwo.setDescription("Week summary");
@@ -259,44 +298,74 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
 
         ArrayList<String> xVals = new ArrayList<String>();      //Strings for labels
 
-        int dayGoalSteps = user.getGoalDailySteps();
-        int[] curWeekSteps = user.getCurrentWeekSteps();
-        int curDaySteps = 0;
+        int dayGoal = user.getGoalDailySteps();
+        int[] curWeek = user.getCurrentWeekSteps();
+        int curDay = 0;
+        String label;
+
+        switch(position) {
+            case 0:
+                //steps graphs
+                dayGoal = user.getGoalDailySteps();
+                curWeek = user.getCurrentWeekSteps();
+                label = "Steps";
+                break;
+            case 1:
+                //standing graphs
+                dayGoal = user.getGoalDailyOnFoot();
+                curWeek = user.getCurrentWeekOnFoot();
+                label = "Standing minutes";
+                break;
+            case 2:
+                //breaks graphs
+                dayGoal = user.getGoalDailyBreaks();
+                curWeek = user.getCurrentWeekBreak();
+                label = "Breaks";
+                break;
+            default:
+                //steps as default
+                dayGoal = user.getGoalDailySteps();
+                curWeek = user.getCurrentWeekSteps();
+                label = "Steps";
+                break;
+        }
 
         Calendar calendar = Calendar.getInstance();
         int day = calendar.get(Calendar.DAY_OF_WEEK);    // Sunday, day=1... Saturday, day=7
         switch (day) {
             case Calendar.SUNDAY:
-                curDaySteps = curWeekSteps[0];
+                curDay = curWeek[0];
                 break;
             case Calendar.MONDAY:
-                curDaySteps = curWeekSteps[1];
+                curDay = curWeek[1];
                 break;
             case Calendar.TUESDAY:
-                curDaySteps = curWeekSteps[2];
+                curDay = curWeek[2];
                 break;
             case Calendar.WEDNESDAY:
-                curDaySteps = curWeekSteps[3];
+                curDay = curWeek[3];
                 break;
             case Calendar.THURSDAY:
-                curDaySteps = curWeekSteps[4];
+                curDay = curWeek[4];
                 break;
             case Calendar.FRIDAY:
-                curDaySteps = curWeekSteps[5];
+                curDay = curWeek[5];
                 break;
             case Calendar.SATURDAY:
-                curDaySteps = curWeekSteps[6];
+                curDay = curWeek[6];
                 break;
         }
-        curDaySteps = 600; //temporary number for example displays (today's steps are 0 in the JSON)
+        //curDay = 600; //temporary number for debug displays (today's values are 0 in the JSON)
 
-        System.out.println("Goal steps: " + dayGoalSteps + ", Today steps: " + curDaySteps);
+        Log.i(GRAPH_TAG + position, "PieGraph: " + "Goal " + label + ": " + dayGoal + ", Today " + label + " : " + curDay);
 
-        yVals1.add(new Entry(curDaySteps,0));
-        yVals1.add(new Entry(dayGoalSteps-curDaySteps,1)); // this needs to be fixed, since curDaySteps can be > dayGoalSteps
+        yVals1.add(new Entry(curDay,0));
+        if (dayGoal > curDay) {
+            yVals1.add(new Entry(dayGoal - curDay, 1)); //If day goal is grater than current, add second entry
+        }
 
-        xVals.add("Today's steps");
-        xVals.add("Steps to goal");
+        xVals.add(label + " today");
+        xVals.add(label + " to goal");
         //xVals.add("");
         //xVals.add("");
 
@@ -318,10 +387,11 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         chartOne.highlightValues(null);
 
         DecimalFormat df = new DecimalFormat("#.##");
-        float displayPercetage = ((float)curDaySteps / (float)dayGoalSteps) * 100;
+        float displayPercetage = ((float)curDay / (float)dayGoal) * 100;
         chartOne.setCenterText(String.valueOf(df.format(displayPercetage)) + "%");
 
         chartOne.setDrawXValues(false);
+        chartOne.setTouchEnabled(false);
 
         chartOne.invalidate();
 
