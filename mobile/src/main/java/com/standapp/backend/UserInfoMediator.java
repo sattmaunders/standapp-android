@@ -28,7 +28,7 @@ public class UserInfoMediator {
 
     public void notifyUserInfoListenersUserInfoUpdated(User user){
         for (UserInfoListener userInfoListener : userInfoListenerList){
-            userInfoListener.onUserUpdated(user);
+            userInfoListener.onUserRefreshed(user);
         }
     }
 

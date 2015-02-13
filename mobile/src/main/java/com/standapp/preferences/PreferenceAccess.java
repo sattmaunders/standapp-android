@@ -1,6 +1,5 @@
 package com.standapp.preferences;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -13,38 +12,70 @@ import com.standapp.activity.MainActivity;
  */
 public class PreferenceAccess {
 
-    public static final String PROPERTY_REG_ID = "registration_id";
+    private static final String PROPERTY_REG_ID = "registration_id";
     private static final String PROPERTY_APP_VERSION = "appVersion";
+    private static final String PROPERTY_LAST_FIT_SESSION_ID = "lastFitSessionId";
+    private static final String PROPERTY_USER_ACCOUNT = "userAccount";
+    private static final String PROPERTY_USER_ID = "userId";
 
-    private Activity activity;
+    private Context context;
 
-    public PreferenceAccess(Activity activity) {
-        this.activity = activity;
+    public PreferenceAccess(Context context) {
+        this.context = context;
     }
 
     /**
      * @return Application's {@code SharedPreferences}.
      */
-    private SharedPreferences getGcmPreferences() {
+    private SharedPreferences getSharedPreferences() {
         // This sample app persists the registration ID in shared preferences, but
         // how you store the regID in your app is up to you.
-        return activity.getSharedPreferences(MainActivity.class.getSimpleName(),
+        return context.getSharedPreferences(MainActivity.class.getSimpleName(),
                 Context.MODE_PRIVATE);
     }
 
-    public String getGcmRegistrationId(){
-        return getGcmPreferences().getString(PROPERTY_REG_ID, "");
-    }
-
     public int getAppVersion(){
-        return getGcmPreferences().getInt(PROPERTY_APP_VERSION, Integer.MIN_VALUE);
+        return getSharedPreferences().getInt(PROPERTY_APP_VERSION, Integer.MIN_VALUE);
     }
 
+    public String getGcmRegistrationId(){
+        return getSharedPreferences().getString(PROPERTY_REG_ID, "");
+    }
 
     public boolean updateGCMRegistrationId(int appVersion, String regId) {
-        SharedPreferences.Editor editor = getGcmPreferences().edit();
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
         editor.putString(PROPERTY_REG_ID, regId);
         editor.putInt(PROPERTY_APP_VERSION, appVersion);
+        return editor.commit();
+    }
+
+    public String getLastFitSessionId(){
+        return getSharedPreferences().getString(PROPERTY_LAST_FIT_SESSION_ID, "");
+    }
+
+    public boolean updateLastFitSessionId(String sessionId) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putString(PROPERTY_LAST_FIT_SESSION_ID, sessionId);
+        return editor.commit();
+    }
+
+    public String getUserAccount(){
+        return getSharedPreferences().getString(PROPERTY_USER_ACCOUNT, "");
+    }
+
+    public boolean updateUserAccount(String account) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putString(PROPERTY_USER_ACCOUNT, account);
+        return editor.commit();
+    }
+
+    public String getUserId() {
+        return getSharedPreferences().getString(PROPERTY_USER_ID, "");
+    }
+
+    public boolean updateUserId(String userId) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putString(PROPERTY_USER_ID, userId);
         return editor.commit();
     }
 }

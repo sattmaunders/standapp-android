@@ -1,5 +1,6 @@
 package com.standapp.activity;
 
+import android.accounts.AccountManager;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
@@ -9,13 +10,15 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.Fitness;
 import com.standapp.R;
@@ -31,6 +34,7 @@ import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.gcm.GCMHelperListener;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
 import com.standapp.logger.LogConstants;
+import com.standapp.preferences.PreferenceAccess;
 import com.standapp.util.User;
 import com.standapp.util.UserInfo;
 
@@ -39,7 +43,26 @@ import javax.inject.Inject;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
-
+/***
+ *
+ * Auth flow:
+ *
+ * .onStart --> googleFitAPIHelper.connect(); -> onFailure (start resolutions) || onConnect (*success*)
+ *
+ * .onResume -> userHelper.openChooseAccountDialog(this); ->
+ *              onActivityResult ->
+ *              userHelper.refreshUser(userAccount) ->
+ *              onUserRefreshed ->
+ *              gcmHelper.init(this, user.get_id()); ->
+ *              onRegisterSuccess/onAlreadyRegistered (*success*)
+ *
+ * .onFragmentCreated ->
+             * userHelper.refreshUser(userAccount) ->
+             * onUserRefreshed ->
+             * gcmHelper.init(this, user.get_id()); ->
+             * onRegisterSuccess/onAlreadyRegistered (*success*)
+ *
+ */
 public class MainActivity extends StandAppBaseActionBarActivity implements GCMHelperListener, UserInfoListener, OnFragmentCreatedListener {
 
     // [START auth_variable_references]
@@ -53,14 +76,17 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     private static final String AUTH_PENDING = "auth_state_pending";
     private boolean authInProgress = false;
 
-    @InjectView(R.id.display)
-    TextView mDisplay;
-
     @InjectView(R.id.tabs)
     PagerSlidingTabStrip tabs;
 
     @InjectView(R.id.pager)
     ViewPager pager;
+
+    @InjectView(R.id.content)
+    LinearLayout content;
+
+    @InjectView(R.id.progressBar)
+    ProgressBar progressBar;
 
     @Inject
     GooglePlayServicesHelper googlePlayServicesHelper;
@@ -80,20 +106,16 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Inject
     UserInfoMediator userInfoMediator;
 
+    @Inject
+    PreferenceAccess preferenceAccess;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
+        initToolbar();
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        // Initialize the ViewPager and set an adapter
-        pager.setAdapter(new PagerAdapter(getSupportFragmentManager()));
-
-        // Bind the tabs to the ViewPager
-        tabs.setViewPager(pager);
         userInfoMediator.registerUserInfoListener(this);
 
         pager.setCurrentItem(1);
@@ -102,8 +124,14 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         if (savedInstanceState != null) {
             authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
         }
-
         googleFitAPIHelper.buildFitnessClient(connectionCallbacks, onConnectionFailedListener);
+    }
+
+    private void initToolbar() {
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle(null);
+        getSupportActionBar().setLogo(R.drawable.sa_ic_applauncher);
     }
 
     @Override
@@ -120,18 +148,15 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        if (id == R.id.action_unregister_listener) {
-//            unregisterFitnessDataListener();
-            return true;
-        }
 
         if (id == R.id.action_unregister_googlefitapi) {
             PendingResult<Status> pendingResult = Fitness.ConfigApi.disableFit(googleFitAPIHelper.getClient());
+            pendingResult.setResultCallback(new ResultCallback<Status>() {
+                @Override
+                public void onResult(Status status) {
+                    Log.i(LogConstants.LOG_ID, "Disconnect fit " + status.toString() + ", code " + status.getStatus().getStatusCode());
+                }
+            });
             return true;
         }
 
@@ -143,7 +168,14 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         @Override
         public void onConnected(Bundle bundle) {
             Log.i(LogConstants.LOG_ID, "Google Fit connected");
-            mDisplay.append("Google fit api connected!");
+
+            if (!preferenceAccess.getUserAccount().isEmpty()){
+                // Initialize the ViewPager and set an adapter
+                pager.setAdapter(new PagerAdapter(getSupportFragmentManager()));
+
+                // Bind the tabs to the ViewPager
+                tabs.setViewPager(pager);
+            }
         }
 
         @Override
@@ -164,7 +196,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             Log.i(LogConstants.LOG_ID, "Connection failed. Cause: " + result.toString());
             if (!result.hasResolution()) {
                 GooglePlayServicesUtil.getErrorDialog(result.getErrorCode(), MainActivity.this, 0).show();
-                mDisplay.append("Google fit api failed, no resoltion!");
                 return;
             }
             if (!authInProgress) {
@@ -181,7 +212,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
     private void logMsg(String msg) {
         Log.d(LogConstants.LOG_ID, msg);
-        mDisplay.append(msg + "\n");
     }
 
     @Override
@@ -214,9 +244,14 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             authInProgress = false;
             if (resultCode == RESULT_OK) {
                 // Make sure the app is not already connected or attempting to connect
+                String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+                preferenceAccess.updateUserAccount(accountName);
+
                 if (!googleFitAPIHelper.isConnecting() && !googleFitAPIHelper.isConnected()) {
                     googleFitAPIHelper.connect();
                 }
+            } else {
+                // TODO WTF
             }
         }
     }
@@ -225,16 +260,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(AUTH_PENDING, authInProgress);
-    }
-
-
-    // Send an upstream message.
-    public void onClick(final View view) {
-        if (view == findViewById(R.id.send)) {
-            gcmHelper.getAsyncTaskSendGCMMessage(mDisplay).execute(null, null, null);
-        } else if (view == findViewById(R.id.clear)) {
-            mDisplay.setText("");
-        }
     }
 
     @Override
@@ -276,8 +301,11 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     }
 
     @Override
-    public void onUserUpdated(User user) {
+    public void onUserRefreshed(User user) {
+
         logMsg("user exists " + user.toString());
+        preferenceAccess.updateUserId(user.get_id());
+        progressBar.setVisibility(View.GONE);
 
         if (googlePlayServicesHelper.checkPlayServices(this)) {
             gcmHelper.init(this, user.get_id());
@@ -313,10 +341,11 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     public void onFragmentCreated() {
         // We don't want every child fragment to fetch user data all the time, just do it once and
-        // check the userinfo singleton.
-        if (userInfo.getUser() == null) {
-            // TODO js refresh user info every x minutes by looking at last refresh time, right now we only update once it's null
-            userHelper.getUserInfo();
+        String userAccount = preferenceAccess.getUserAccount();
+        if (!userAccount.isEmpty() && userInfo.getUser() == null){
+            progressBar.setVisibility(View.VISIBLE);
+            userHelper.refreshUser(userAccount);
         }
     }
+
 }

@@ -19,6 +19,7 @@ public class UserTransformer {
             //Get top level JSON objects:
             JSONObject historyWeeks = jsonUser.getJSONObject("history").getJSONObject("weeks");
             JSONObject preferences = jsonUser.getJSONObject("preferences");
+            JSONObject config = jsonUser.getJSONObject("config");
 
 
             //Start with preferences:
@@ -115,6 +116,8 @@ public class UserTransformer {
                     currentWeekSteps, currentWeekOnFoot, currentWeekBreak,
                     keyArr, _id
                     );
+
+            userObject.setEmail(config.getString("email"));
 
             return userObject;
             /* User constructor:

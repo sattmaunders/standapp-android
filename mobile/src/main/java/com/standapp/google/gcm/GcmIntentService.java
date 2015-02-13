@@ -10,6 +10,9 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -25,13 +28,19 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.standapp.R;
 import com.standapp.activity.MainActivity;
 import com.standapp.backend.BackendServer;
+import com.standapp.backend.SenderId;
 import com.standapp.backend.StandAppMessages;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
 import com.standapp.logger.LogConstants;
+import com.standapp.preferences.PreferenceAccess;
+
+import org.json.JSONObject;
 
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
+
+// TODO should use DI dagger injection.
 
 /**
  * This {@code IntentService} does the actual handling of the GCM message.
@@ -43,9 +52,10 @@ import java.util.concurrent.TimeUnit;
 public class GcmIntentService extends IntentService {
     public static final int NOTIFICATION_ID = 1;
     public static final int NOTIFICATION_SESSION_ID = 187;
-    public static final String SESSION_WALKING_ID = "sa_walking_id";
 
     private static final String DATE_FORMAT = "yyyy.MM.dd G 'at' HH:mm:ss z";
+    private final PreferenceAccess preferenceAccess;
+    private BackendServer backendServer;
 //    private static final DataType TYPE_STEP_COUNT_CUMULATIVE = DataType.TYPE_STEP_COUNT_CUMULATIVE;
 
     private NotificationManager mNotificationManager;
@@ -59,7 +69,14 @@ public class GcmIntentService extends IntentService {
     public GcmIntentService() {
         super("GcmIntentService");
         googleFitAPIHelper = new GoogleFitAPIHelper(this);
+        preferenceAccess = new PreferenceAccess(this);
     }
+
+
+    /**
+     * FIXME JS when is a better time to release the wakelock? maybe when the session has started for when
+     * it is a startEvent, and when session has ended when.
+     */
 
 
     @Override
@@ -75,36 +92,70 @@ public class GcmIntentService extends IntentService {
         // in your BroadcastReceiver.
         String messageType = gcm.getMessageType(intent);
 
-        if (!extras.isEmpty()) {  // has effect of unparcelling Bundle
+        // TODO js dont use null check to determine if this service was invoked by user tap on prior notifaction
+        if (extras == null) {
+            backendServer = new BackendServer(Volley.newRequestQueue(this));
+            setTypeOfWork(StandAppMessages.BREAK_END);
+            initFitnessClientAndConnect();
+            // Send request end.break
+            sendMessageToChromeToEndBreak();
+            releaseWakeLock();
+        } else {
+            if (!extras.isEmpty()) {  // has effect of unparcelling Bundle
             /*
              * Filter messages based on message type. Since it is likely that GCM will be
              * extended in the future with new message types, just ignore any message types you're
              * not interested in, or that you don't recognize.
              */
-            if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
-                sendNotification("Send error: " + extras.toString());
-            } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
-                sendNotification("Deleted messages on server: " + extras.toString());
-                // If it's a regular GCM message, do some work.
-            } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
-                Log.i(LogConstants.LOG_ID, "Received: " + extras.toString());
-                sendNotification("Received: " + extras.toString());
-
-                if (extras.getString(BackendServer.GCM_FIELD_MESSAGE_KEY).equalsIgnoreCase(StandAppMessages.BREAK_START.toString())){
-                    setTypeOfWork(StandAppMessages.BREAK_START);
-                    initFitnessClientAndConnect();
-                } else if (extras.getString(BackendServer.GCM_FIELD_MESSAGE_KEY).equalsIgnoreCase(StandAppMessages.BREAK_END.toString())){
-                    setTypeOfWork(StandAppMessages.BREAK_END);
-                    initFitnessClientAndConnect();
-                } else {
-                    releaseWakeLock();
+                if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
+                    sendNotification("Send error: " + extras.toString());
+                } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
+                    sendNotification("Deleted messages on server: " + extras.toString());
+                    // If it's a regular GCM message, do some work.
+                } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType) && !messageOriginatedFromPhone(extras)) {
+                    Log.i(LogConstants.LOG_ID, "Received: " + extras.toString());
+                    if (extras.getString(BackendServer.GCM_FIELD_MESSAGE_KEY).equalsIgnoreCase(StandAppMessages.BREAK_START.toString())) {
+                        setTypeOfWork(StandAppMessages.BREAK_START);
+                        initFitnessClientAndConnect();
+                    } else if (extras.getString(BackendServer.GCM_FIELD_MESSAGE_KEY).equalsIgnoreCase(StandAppMessages.BREAK_END.toString())) {
+                        setTypeOfWork(StandAppMessages.BREAK_END);
+                        initFitnessClientAndConnect();
+                    } else {
+                        releaseWakeLock();
+                    }
+                } else if (messageOriginatedFromPhone(extras)) {
+                    Log.i(LogConstants.LOG_ID, "Ignored a gcm message from own phone device");
                 }
             }
         }
+    }
 
+    private boolean messageOriginatedFromPhone(Bundle extras) {
+        return extras.getString(BackendServer.GCM_FIELD_SENDER_ID) != null && extras.getString(BackendServer.GCM_FIELD_SENDER_ID).equalsIgnoreCase(SenderId.PHONE.toString());
+    }
+
+    private void sendMessageToChromeToEndBreak() {
+        Response.Listener<JSONObject> successListener = new Response.Listener<JSONObject>() {
+            public void onResponse(JSONObject response) {
+                Log.i(LogConstants.LOG_ID, "Successfully sent message to end break to server for chrome ext");
+            }
+        };
+
+        Response.ErrorListener errorListener = new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.i(LogConstants.LOG_ID, "Unable to send message to end break to server for chrome ext");
+            }
+        };
+
+        String userId = preferenceAccess.getUserId();
+        if (!userId.isEmpty()) {
+            backendServer.endBreak(userId, successListener, errorListener);
+        }
     }
 
     private void releaseWakeLock() {
+        Log.i(LogConstants.LOG_ID, "Releasing wakelock");
         GcmBroadcastReceiver.completeWakefulIntent(this.receivedMsgIntent);
     }
 
@@ -116,9 +167,9 @@ public class GcmIntentService extends IntentService {
 
     private void endWorkout() {
         endSession();
-        unsubscribeFromSteps();
+//        unsubscribeFromSteps(); // TODO confirm unsubscribing destroys data
         clearRecordingNotification();
-        disconnectFitnessClient();
+        disconnectFitnessClient(); // possible to discconect before async requests are made
     }
 
     private void unsubscribeFromSteps() {
@@ -129,17 +180,47 @@ public class GcmIntentService extends IntentService {
 
     private void disconnectFitnessClient() {
         if (googleFitAPIHelper.getClient().isConnected()) {
-            googleFitAPIHelper.getClient().disconnect();
+//            googleFitAPIHelper.getClient().disconnect(); // fIXME do we really need to disconnect client? even at {@link MainActivity}
         }
     }
 
-    private void endSession() {
-        PendingResult<SessionStopResult> pendingResult = Fitness.SessionsApi.stopSession(googleFitAPIHelper.getClient(), SESSION_WALKING_ID);
+    private void endSessionAndCreateNewOne(String oldSessionId) {
+        Log.i(LogConstants.LOG_ID, "Ending session (" + oldSessionId + ") and creating a new one");
+
+        PendingResult<SessionStopResult> pendingResult = Fitness.SessionsApi.stopSession(googleFitAPIHelper.getClient(), oldSessionId);
         pendingResult.setResultCallback(new ResultCallback<SessionStopResult>() {
             @Override
             public void onResult(SessionStopResult sessionStopResult) {
-                Log.i(LogConstants.LOG_ID, sessionStopResult.toString());
-            }});
+                Log.i(LogConstants.LOG_ID, "endSession toString: " + sessionStopResult.toString() + " endSession code " + sessionStopResult.getStatus().getStatusCode());
+                if (sessionStopResult.getSessions() != null && sessionStopResult.getSessions().size() > 0) {
+                    Log.i(LogConstants.LOG_ID, "Ended some session properly, # of sessions ended " + sessionStopResult.getSessions().size());
+                }
+                if (preferenceAccess.updateLastFitSessionId("")) {
+                    Log.i(LogConstants.LOG_ID, "Updated session id preferences by clearing it");
+                    createSession();
+                }
+            }
+        });
+    }
+
+
+    private void endSession() {
+        String lastFitSessionId = preferenceAccess.getLastFitSessionId();
+        Log.i(LogConstants.LOG_ID, "Trying to end session for " + lastFitSessionId);
+
+        if (!lastFitSessionId.isEmpty()) {
+            PendingResult<SessionStopResult> pendingResult = Fitness.SessionsApi.stopSession(googleFitAPIHelper.getClient(), lastFitSessionId);
+            pendingResult.setResultCallback(new ResultCallback<SessionStopResult>() {
+                @Override
+                public void onResult(SessionStopResult sessionStopResult) {
+                    Log.i(LogConstants.LOG_ID, "endSession toString: " + sessionStopResult.toString() + " endSession code " + sessionStopResult.getStatus().getStatusCode());
+                    preferenceAccess.updateLastFitSessionId("");
+                }
+            });
+        } else {
+            Log.i(LogConstants.LOG_ID, "Unable to end empty session id");
+        }
+
     }
 
     private void clearRecordingNotification() {
@@ -148,23 +229,40 @@ public class GcmIntentService extends IntentService {
 
     private void initFitnessClientAndConnect() {
         googleFitAPIHelper.buildFitnessClient(connectionCallbacks, onConnectionFailedListener);
-        if (!googleFitAPIHelper.isConnected() && !googleFitAPIHelper.isConnecting() ){
+        if (!googleFitAPIHelper.isConnected() && !googleFitAPIHelper.isConnecting()) {
             googleFitAPIHelper.connect();
         }
     }
 
     private void createSession() {
-        Session s = getBeginSession();
-        PendingResult<Status> pendingResult = Fitness.SessionsApi.startSession(googleFitAPIHelper.getClient(), s);
-        pendingResult.setResultCallback(new ResultCallback<Status>() {
-            @Override
-            public void onResult(Status status) {
-                if (status.isSuccess()) {
-                    Log.i(LogConstants.LOG_ID, "Successfully subscribed!");
-                } else {
-                    Log.i(LogConstants.LOG_ID, "There was a problem subscribing.");
+        final Session beginSession = getBeginSession();
+
+        // Make sure there's no active session
+        String lastFitSessionId = preferenceAccess.getLastFitSessionId();
+        Log.i(LogConstants.LOG_ID, "When creating session, the last session id: " + lastFitSessionId);
+
+
+        if (lastFitSessionId.isEmpty()) {
+            PendingResult<Status> pendingResult = Fitness.SessionsApi.startSession(googleFitAPIHelper.getClient(), beginSession);
+            pendingResult.setResultCallback(new ResultCallback<Status>() {
+                @Override
+                public void onResult(Status status) {
+                    if (status.isSuccess()) {
+                        Log.i(LogConstants.LOG_ID, "Successfully subscribed!");
+                        preferenceAccess.updateLastFitSessionId(beginSession.getIdentifier());
+                        Log.i(LogConstants.LOG_ID, "Updated preferences with " + beginSession.getIdentifier());
+
+                    } else {
+                        Log.i(LogConstants.LOG_ID, "There was a problem subscribing. Code" + status.getStatusCode());
+                    }
                 }
-            }});
+            });
+        } else {
+            Log.i(LogConstants.LOG_ID, "A session ( " + lastFitSessionId + ")already existed, end it, and create a new one");
+            endSessionAndCreateNewOne(lastFitSessionId); // Watchtout, can go in inifinite recursion
+        }
+
+
     }
 
     private Session getBeginSession() {
@@ -172,14 +270,13 @@ public class GcmIntentService extends IntentService {
         Date now = new Date();
         cal.setTime(now);
         // TODO refactor these into constants
-        return new Session.Builder()
-                    .setName("sa_walking")
-                    .setIdentifier(SESSION_WALKING_ID)
-                    .setDescription("StandApp walking")
-                    .setStartTime(cal.getTimeInMillis(), TimeUnit.MILLISECONDS)
-                    // optional - if your app knows what activity:
-                    .setActivity(FitnessActivities.WALKING)
-                    .build();
+        Session session = new Session.Builder()
+                .setName("StandApp Walking")
+                .setDescription("StandApp monitors your walking to meet your office health goals") // TODO string resource?
+                .setStartTime(cal.getTimeInMillis(), TimeUnit.MILLISECONDS)
+                .setActivity(FitnessActivities.WALKING) // optional - if your app knows what activity:
+                .build();
+        return session;
     }
 
 
@@ -195,7 +292,8 @@ public class GcmIntentService extends IntentService {
                         .setOngoing(true)
                         .setContentText(msg);
 
-        mBuilder.setContentIntent(mainActivityContentIntent); // FIXME JS Send msg to end request? @JB
+        PendingIntent endWorkoutPendingIntent = PendingIntent.getService(this, 0, new Intent(this, GcmIntentService.class), 0);
+        mBuilder.setContentIntent(endWorkoutPendingIntent);
         mNotificationManager.notify(NOTIFICATION_SESSION_ID, mBuilder.build());
     }
 
@@ -226,6 +324,7 @@ public class GcmIntentService extends IntentService {
             } else if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_SERVICE_DISCONNECTED) {
                 Log.i(LogConstants.LOG_ID, "Connection lost.  Reason: Service Disconnected");
             }
+            releaseWakeLock();
         }
     };
 
@@ -234,11 +333,9 @@ public class GcmIntentService extends IntentService {
         @Override
         public void onConnectionFailed(ConnectionResult result) {
             Log.i(LogConstants.LOG_ID, "Connection failed. Cause: " + result.toString());
-            if (!result.hasResolution()) {
-                sendNotificationOAuthResoluton();
-                return;
-            }
-            sendNotificationOAuthResoluton();
+            sendNotificationOAuthResolution();
+            releaseWakeLock();
+            return;
         }
     };
 
@@ -255,15 +352,15 @@ public class GcmIntentService extends IntentService {
         mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
     }
 
-    private void sendNotificationOAuthResoluton() {
+    private void sendNotificationOAuthResolution() {
         String msg = getResources().getString(R.string.notif_oauth_msg);
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.common_signin_btn_icon_disabled_dark)
+                        .setSmallIcon(R.drawable.sa_ic_fit)
                         .setContentTitle(getResources().getString(R.string.notif_oauth_title))
                         .setStyle(new NotificationCompat.BigTextStyle()
                                 .bigText(msg))
-                        .setContentText( msg);
+                        .setContentText(msg);
 
         mBuilder.setContentIntent(mainActivityContentIntent);
         mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
@@ -297,18 +394,23 @@ public class GcmIntentService extends IntentService {
     }
 
     private void unsubscribe(final DataType dataType) {
-        PendingResult<Status> unsubscribe = Fitness.RecordingApi.unsubscribe(googleFitAPIHelper.getClient(), dataType);
-        unsubscribe.setResultCallback(new ResultCallback<Status>() {
-                    @Override
-                    public void onResult(Status status) {
-                        if (status.isSuccess()) {
-                            Log.i(LogConstants.LOG_ID, "Successfully unsubscribed for data type: " + dataType.getName());
-                        } else {
-                            // Subscription not removed
-                            Log.i(LogConstants.LOG_ID, "Failed to unsubscribe for data type: " + dataType.getName());
-                        }
+        if (googleFitAPIHelper.getClient().isConnected()) {
+            PendingResult<Status> unsubscribe = Fitness.RecordingApi.unsubscribe(googleFitAPIHelper.getClient(), dataType);
+            unsubscribe.setResultCallback(new ResultCallback<Status>() {
+                @Override
+                public void onResult(Status status) {
+                    if (status.isSuccess()) {
+                        Log.i(LogConstants.LOG_ID, "Successfully unsubscribed for data type: " + dataType.getName());
+                    } else {
+                        // Subscription not removed
+                        Log.i(LogConstants.LOG_ID, "Failed to unsubscribe for data type: " + dataType.getName());
                     }
-                });
+                }
+            });
+        } else {
+            Log.i(LogConstants.LOG_ID, "Fit client not connected, unable to unsubscribe");
+        }
+
     }
 
     public void setTypeOfWork(StandAppMessages typeOfWork) {

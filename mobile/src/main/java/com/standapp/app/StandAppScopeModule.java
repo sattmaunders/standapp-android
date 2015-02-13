@@ -39,8 +39,8 @@ public class StandAppScopeModule {
 
     @Provides
     @Singleton
-    UserInfo provideUserInfo(@ForApplication Context context){
-        return new UserInfo(context);
+    UserInfo provideUserInfo(){
+        return new UserInfo();
     }
 
     @Provides

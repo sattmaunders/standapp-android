@@ -8,6 +8,7 @@ import com.android.volley.Response;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.standapp.logger.LogConstants;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -27,6 +28,7 @@ public class BackendServer {
 
     private static final String REST_WORKOUT_START = "workout/start";
     private static final String REST_WORKOUT_END = "workout/end";
+    private static final String REST_MESSAGE = "message";
     public static final String USER_ID = "userId";
     public static final String REG_ID = "regId";
     public static final String EMAIL = "email";
@@ -58,6 +60,24 @@ public class BackendServer {
         String url = SERVER_BASE_URL + "/" + REST_USER + "/" + userId + "/" + REST_GCMKEY + "/" + registrationId;
         Log.d(LogConstants.LOG_ID, "Registering " + registrationId + " for userId " + userId);
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, null, successListener, errorListener);
+        requestQueue.add(request);
+        return true;
+    }
+
+    public boolean endBreak(String userId, Response.Listener<JSONObject> successListener, Response.ErrorListener errorListener) {
+        String url = SERVER_BASE_URL + "/" + REST_USER + "/" + userId + "/" + REST_MESSAGE;
+        Log.d(LogConstants.LOG_ID, "End breaking for userId " + userId);
+        JSONObject contentJSON = new JSONObject();
+        JSONObject messageJSON = new JSONObject();
+        try {
+            messageJSON.put(GCM_FIELD_MESSAGE_KEY, StandAppMessages.BREAK_END.toString());
+            messageJSON.put(GCM_FIELD_SENDER_ID, SenderId.PHONE.toString());
+            contentJSON.put("content", messageJSON);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, contentJSON, successListener, errorListener);
         requestQueue.add(request);
         return true;
     }
