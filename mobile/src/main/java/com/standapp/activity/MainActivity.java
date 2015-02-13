@@ -10,7 +10,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.google.android.gms.common.ConnectionResult;
@@ -74,14 +75,17 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     private static final String AUTH_PENDING = "auth_state_pending";
     private boolean authInProgress = false;
 
-    @InjectView(R.id.display)
-    TextView mDisplay;
-
     @InjectView(R.id.tabs)
     PagerSlidingTabStrip tabs;
 
     @InjectView(R.id.pager)
     ViewPager pager;
+
+    @InjectView(R.id.content)
+    LinearLayout content;
+
+    @InjectView(R.id.progressBar)
+    ProgressBar progressBar;
 
     @Inject
     GooglePlayServicesHelper googlePlayServicesHelper;
@@ -109,10 +113,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
+        initToolbar();
 
         userInfoMediator.registerUserInfoListener(this);
 
@@ -123,6 +124,13 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
         }
         googleFitAPIHelper.buildFitnessClient(connectionCallbacks, onConnectionFailedListener);
+    }
+
+    private void initToolbar() {
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle(null);
+        getSupportActionBar().setLogo(R.drawable.sa_ic_applauncher);
     }
 
     @Override
@@ -162,7 +170,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         @Override
         public void onConnected(Bundle bundle) {
             Log.i(LogConstants.LOG_ID, "Google Fit connected");
-            mDisplay.append("Google fit api connected!");
 
             if (!preferenceAccess.getUserAccount().isEmpty()){
                 // Initialize the ViewPager and set an adapter
@@ -191,7 +198,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             Log.i(LogConstants.LOG_ID, "Connection failed. Cause: " + result.toString());
             if (!result.hasResolution()) {
                 GooglePlayServicesUtil.getErrorDialog(result.getErrorCode(), MainActivity.this, 0).show();
-                mDisplay.append("Google fit api failed, no resoltion!");
                 return;
             }
             if (!authInProgress) {
@@ -208,7 +214,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
     private void logMsg(String msg) {
         Log.d(LogConstants.LOG_ID, msg);
-        mDisplay.append(msg + "\n");
     }
 
     @Override
@@ -259,16 +264,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         outState.putBoolean(AUTH_PENDING, authInProgress);
     }
 
-
-    // Send an upstream message.
-    public void onClick(final View view) {
-        if (view == findViewById(R.id.send)) {
-            gcmHelper.getAsyncTaskSendGCMMessage(mDisplay).execute(null, null, null);
-        } else if (view == findViewById(R.id.clear)) {
-            mDisplay.setText("");
-        }
-    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -309,8 +304,10 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
     @Override
     public void onUserRefreshed(User user) {
+
         logMsg("user exists " + user.toString());
         preferenceAccess.updateUserId(user.get_id());
+        progressBar.setVisibility(View.GONE);
 
         if (googlePlayServicesHelper.checkPlayServices(this)) {
             gcmHelper.init(this, user.get_id());
@@ -348,6 +345,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         // We don't want every child fragment to fetch user data all the time, just do it once and
         String userAccount = preferenceAccess.getUserAccount();
         if (!userAccount.isEmpty() && userInfo.getUser() == null){
+            progressBar.setVisibility(View.VISIBLE);
             userHelper.refreshUser(userAccount);
         }
     }
