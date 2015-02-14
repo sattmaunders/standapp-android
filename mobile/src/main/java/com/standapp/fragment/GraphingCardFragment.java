@@ -125,8 +125,8 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         int[] currentWeekSteps, int[] currentWeekOnFoot, int[] currentWeekBreak,
 */
         int colorBest = Color.BLACK;
-        int colorPrevious = Color.GREEN;
-        int colorCurrent = Color.BLUE;
+        int colorPrevious = Color.parseColor("#2ecc71"); //Color.GREEN;
+        int colorCurrent = Color.parseColor("#2196f3");  //Color.BLUE;
 
 
         ArrayList<String> xVals = new ArrayList<String>();      //X axis label values
@@ -334,30 +334,34 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
                 break;
         }
 
-        Calendar calendar = Calendar.getInstance();
-        int day = calendar.get(Calendar.DAY_OF_WEEK);    // Sunday, day=1... Saturday, day=7
-        switch (day) {
-            case Calendar.SUNDAY:
-                curDay = curWeek[0];
-                break;
-            case Calendar.MONDAY:
-                curDay = curWeek[1];
-                break;
-            case Calendar.TUESDAY:
-                curDay = curWeek[2];
-                break;
-            case Calendar.WEDNESDAY:
-                curDay = curWeek[3];
-                break;
-            case Calendar.THURSDAY:
-                curDay = curWeek[4];
-                break;
-            case Calendar.FRIDAY:
-                curDay = curWeek[5];
-                break;
-            case Calendar.SATURDAY:
-                curDay = curWeek[6];
-                break;
+        if (curWeek.length == 7) {
+
+            Calendar calendar = Calendar.getInstance();
+            int day = calendar.get(Calendar.DAY_OF_WEEK);    // Sunday, day=1... Saturday, day=7
+            switch (day) {
+                case Calendar.SUNDAY:
+                    curDay = curWeek[0];
+                    break;
+                case Calendar.MONDAY:
+                    curDay = curWeek[1];
+                    break;
+                case Calendar.TUESDAY:
+                    curDay = curWeek[2];
+                    break;
+                case Calendar.WEDNESDAY:
+                    curDay = curWeek[3];
+                    break;
+                case Calendar.THURSDAY:
+                    curDay = curWeek[4];
+                    break;
+                case Calendar.FRIDAY:
+                    curDay = curWeek[5];
+                    break;
+                case Calendar.SATURDAY:
+                    curDay = curWeek[6];
+                    break;
+            }
+
         }
         //curDay = 600; //temporary number for debug displays (today's values are 0 in the JSON)
 
@@ -379,8 +383,10 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         // add a lot of colors
 
         ArrayList<Integer> colors = new ArrayList<Integer>();
-        colors.add(ColorTemplate.getHoloBlue());
-        colors.add(Color.GREEN);
+        //colors.add(ColorTemplate.getHoloBlue());
+        //colors.add(Color.GREEN);
+        colors.add(Color.parseColor("#2196f3"));
+        colors.add(Color.parseColor("#2ecc71"));
 
         set1.setColors(colors);
 
