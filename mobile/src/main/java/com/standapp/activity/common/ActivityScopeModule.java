@@ -22,6 +22,7 @@ import com.standapp.fragment.GraphingCardFragment;
 import com.standapp.fragment.SuperAwesomeCardFragment;
 import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.GooglePlayServicesHelper;
+import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
 import com.standapp.preferences.PreferenceAccess;
 import com.standapp.util.UserInfo;
 import com.standapp.util.UserTransformer;
@@ -109,10 +110,9 @@ public class ActivityScopeModule {
         return new UserTransformer();
     }
 
-
-
-
-
-
+    @Provides
+    GoogleFitAPIHelper provideGoogleFitAPIHelper(@ForApplication Context context, PreferenceAccess preferenceAccess, GCMHelper gcmHelper) {
+        return new GoogleFitAPIHelper(context, preferenceAccess, gcmHelper);
+    }
 
 }

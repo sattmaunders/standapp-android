@@ -1,11 +1,21 @@
 package com.standapp.google.googlefitapi;
 
+import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.Fitness;
+import com.standapp.R;
+import com.standapp.google.gcm.GCMHelper;
+import com.standapp.logger.LogConstants;
+import com.standapp.preferences.PreferenceAccess;
 
 /**
  * Created by John on 2/9/2015.
@@ -14,9 +24,13 @@ public class GoogleFitAPIHelper {
 
     private final Context context;
     private GoogleApiClient mClient;
+    private PreferenceAccess preferenceAccess;
+    private GCMHelper gcmHelper;
 
-    public GoogleFitAPIHelper(Context context) {
+    public GoogleFitAPIHelper(Context context, PreferenceAccess preferenceAccess, GCMHelper gcmHelper) {
         this.context = context;
+        this.preferenceAccess = preferenceAccess;
+        this.gcmHelper = gcmHelper;
     }
 
     public void connect() {
@@ -61,5 +75,28 @@ public class GoogleFitAPIHelper {
 
     public GoogleApiClient getClient() {
         return mClient;
+    }
+
+    /**
+     * This revokes OAuth connect with the app and also clears our user related preferences
+     *
+     * @param activity in which to display toast messages of results.
+     */
+    public void revokeFitPermissions(final Activity activity) {
+        PendingResult<Status> pendingResult = Fitness.ConfigApi.disableFit(mClient);
+        pendingResult.setResultCallback(new ResultCallback<Status>() {
+            @Override
+            public void onResult(Status status) {
+                Log.i(LogConstants.LOG_ID, "Disconnect fit " + status.toString() + ", code " + status.getStatus().getStatusCode());
+                if (status.isSuccess()){
+                    Toast.makeText(activity, activity.getString(R.string.toast_googlefit_disconnect_success), Toast.LENGTH_LONG).show();
+                    preferenceAccess.updateUserAccount("");
+                    preferenceAccess.updateUserId("");
+                    gcmHelper.clearRegId();
+                } else {
+                    Toast.makeText(activity, activity.getString(R.string.toast_googlefit_disconnect_failed), Toast.LENGTH_LONG).show();
+                }
+            }
+        });
     }
 }

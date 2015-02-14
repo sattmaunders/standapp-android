@@ -68,7 +68,7 @@ public class GcmIntentService extends IntentService {
 
     public GcmIntentService() {
         super("GcmIntentService");
-        googleFitAPIHelper = new GoogleFitAPIHelper(this);
+        googleFitAPIHelper = new GoogleFitAPIHelper(this, null, null);
         preferenceAccess = new PreferenceAccess(this);
     }
 
@@ -293,7 +293,7 @@ public class GcmIntentService extends IntentService {
                         .setOngoing(true)
                         .setContentText(msg);
 
-        PendingIntent endWorkoutPendingIntent = PendingIntent.getService(this, 0, new Intent(this, GcmIntentService.class), 0);
+        PendingIntent endWorkoutPendingIntent = PendingIntent.getService(this, 0, new Intent(this, GcmIntentService.class), PendingIntent.FLAG_CANCEL_CURRENT);
         mBuilder.setContentIntent(endWorkoutPendingIntent);
         mNotificationManager.notify(NOTIFICATION_SESSION_ID, mBuilder.build());
     }

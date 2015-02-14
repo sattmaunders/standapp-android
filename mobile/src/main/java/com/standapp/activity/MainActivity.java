@@ -17,10 +17,6 @@ import com.astuetz.PagerSlidingTabStrip;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.fitness.Fitness;
 import com.standapp.R;
 import com.standapp.activity.common.StandAppBaseActionBarActivity;
 import com.standapp.activity.error.ChromeExtErrorActivity;
@@ -74,6 +70,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
      * consent dialog. This avoids common duplications as might happen on screen rotations, etc.
      */
     private static final String AUTH_PENDING = "auth_state_pending";
+    public static final String INTENT_PARAM_USER_EMAIL = "USER_EMAIL";
     private boolean authInProgress = false;
 
     @InjectView(R.id.tabs)
@@ -143,20 +140,10 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-
         if (id == R.id.action_unregister_googlefitapi) {
-            PendingResult<Status> pendingResult = Fitness.ConfigApi.disableFit(googleFitAPIHelper.getClient());
-            pendingResult.setResultCallback(new ResultCallback<Status>() {
-                @Override
-                public void onResult(Status status) {
-                    Log.i(LogConstants.LOG_ID, "Disconnect fit " + status.toString() + ", code " + status.getStatus().getStatusCode());
-                }
-            });
+            googleFitAPIHelper.revokeFitPermissions(this);
             return true;
         }
 
@@ -252,6 +239,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
                 }
             } else {
                 // TODO WTF
+                startGenericErrorActivity();
             }
         }
     }
@@ -292,7 +280,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     }
 
     private void startGenericErrorActivity() {
-        replaceThisActivity(GenericErrorActivity.class);
+        replaceThisActivity(new Intent(this, GenericErrorActivity.class));
     }
 
     @Override
@@ -324,16 +312,17 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     public void onUserNotFound(String userEmail) {
         logMsg("user not found " + userEmail);
-        gcmHelper.clearRegId();
-        startChromeExtensionErrorActivity();
+        gcmHelper.clearRegId(); // probably not needed here as the user will revoke permissions and cause a clear
+        startChromeExtensionErrorActivity(userEmail);
     }
 
-    private void startChromeExtensionErrorActivity() {
-        replaceThisActivity(ChromeExtErrorActivity.class);
+    private void startChromeExtensionErrorActivity(String userEmail) {
+        Intent intent = new Intent(this, ChromeExtErrorActivity.class);
+        intent.putExtra(INTENT_PARAM_USER_EMAIL, userEmail);
+        replaceThisActivity(intent);
     }
 
-    private void replaceThisActivity(Class classActivity) {
-        Intent intent = new Intent(this, classActivity);
+    private void replaceThisActivity(Intent intent) {
         this.startActivity(intent);
         this.finish();
     }
