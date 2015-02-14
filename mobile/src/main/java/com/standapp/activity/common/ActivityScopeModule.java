@@ -111,8 +111,8 @@ public class ActivityScopeModule {
     }
 
     @Provides
-    GoogleFitAPIHelper provideGoogleFitAPIHelper(@ForApplication Context context, PreferenceAccess preferenceAccess, GCMHelper gcmHelper) {
-        return new GoogleFitAPIHelper(context, preferenceAccess, gcmHelper);
+    GoogleFitAPIHelper provideGoogleFitAPIHelper(@ForApplication Context context, PreferenceAccess preferenceAccess) {
+        return new GoogleFitAPIHelper(context, preferenceAccess);
     }
 
 }

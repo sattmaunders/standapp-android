@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.google.android.gms.common.ConnectionResult;
@@ -29,6 +30,7 @@ import com.standapp.google.GooglePlayServicesHelper;
 import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.gcm.GCMHelperListener;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
+import com.standapp.google.googlefitapi.RevokeGoogleFitPermissionsListener;
 import com.standapp.logger.LogConstants;
 import com.standapp.preferences.PreferenceAccess;
 import com.standapp.util.User;
@@ -59,7 +61,7 @@ import butterknife.InjectView;
              * onRegisterSuccess/onAlreadyRegistered (*success*)
  *
  */
-public class MainActivity extends StandAppBaseActionBarActivity implements GCMHelperListener, UserInfoListener, OnFragmentCreatedListener {
+public class MainActivity extends StandAppBaseActionBarActivity implements GCMHelperListener, UserInfoListener, OnFragmentCreatedListener, RevokeGoogleFitPermissionsListener {
 
     // [START auth_variable_references]
     private static final int REQUEST_OAUTH = 1;
@@ -143,11 +145,15 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         int id = item.getItemId();
 
         if (id == R.id.action_unregister_googlefitapi) {
-            googleFitAPIHelper.revokeFitPermissions(this);
-            return true;
+            return revokeGoogleFitPermissions();
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private boolean revokeGoogleFitPermissions() {
+        googleFitAPIHelper.revokeFitPermissions(this, this);
+        return true;
     }
 
     private GoogleApiClient.ConnectionCallbacks connectionCallbacks = new GoogleApiClient.ConnectionCallbacks() {
@@ -162,6 +168,8 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
                 // Bind the tabs to the ViewPager
                 tabs.setViewPager(pager);
+
+                // This will trigger onFragmentCreated
             }
         }
 
@@ -238,7 +246,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
                     googleFitAPIHelper.connect();
                 }
             } else {
-                // TODO WTF
                 startGenericErrorActivity();
             }
         }
@@ -299,7 +306,8 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             gcmHelper.init(this, user.get_id());
         } else {
             Log.i(LogConstants.LOG_ID, "No valid Google Play Services APK found.");
-            // TODO Throw exception
+            Log.i(LogConstants.LOG_ID, "No valid Google Play Services APK found.");
+            Toast.makeText(this, getString(R.string.no_google_play_services_apk), Toast.LENGTH_LONG);
         }
 
     }
@@ -312,7 +320,8 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     public void onUserNotFound(String userEmail) {
         logMsg("user not found " + userEmail);
-        gcmHelper.clearRegId(); // probably not needed here as the user will revoke permissions and cause a clear
+        progressBar.setVisibility(View.GONE);
+        preferenceAccess.clearRegId(); // probably not needed here as the user will revoke permissions and cause a clear
         startChromeExtensionErrorActivity(userEmail);
     }
 
@@ -337,4 +346,8 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         }
     }
 
+    @Override
+    public void onRevokedFitPermissions() {
+        googleFitAPIHelper.connect();
+    }
 }

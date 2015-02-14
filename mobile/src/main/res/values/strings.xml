@@ -27,5 +27,6 @@
     <string name="toast_googlefit_disconnect_failed">Unable to disconnect app from Google Fit.</string>
     <string name="text_chrome_ext_sign_in_diff_account">Switch account</string>
     <string name="toast_googlefit_restart_app">Restart the app and try again.</string>
+    <string name="no_google_play_services_apk">This app requires Google Play services</string>
 
 </resources>

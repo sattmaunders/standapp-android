@@ -53,23 +53,24 @@ public class GcmIntentService extends IntentService {
     public static final int NOTIFICATION_ID = 1;
     public static final int NOTIFICATION_SESSION_ID = 1872;
 
-    private static final String DATE_FORMAT = "yyyy.MM.dd G 'at' HH:mm:ss z";
     private final PreferenceAccess preferenceAccess;
     private BackendServer backendServer;
-//    private static final DataType TYPE_STEP_COUNT_CUMULATIVE = DataType.TYPE_STEP_COUNT_CUMULATIVE;
+    private GoogleFitAPIHelper googleFitAPIHelper;
+
 
     private NotificationManager mNotificationManager;
-    private NotificationCompat.Builder builder;
-    private GoogleFitAPIHelper googleFitAPIHelper;
     private PendingIntent mainActivityContentIntent;
     private StandAppMessages typeOfWork = null;
     private Intent receivedMsgIntent; // key for wakeelock
 
+    private static final boolean SUBSCRIBE_TO_STEPS = false;
+    private static final boolean UNSUBSCRIBE_TO_STEPS = false;
+
 
     public GcmIntentService() {
         super("GcmIntentService");
-        googleFitAPIHelper = new GoogleFitAPIHelper(this, null, null);
         preferenceAccess = new PreferenceAccess(this);
+        googleFitAPIHelper = new GoogleFitAPIHelper(this, preferenceAccess);
     }
 
 
@@ -165,27 +166,29 @@ public class GcmIntentService extends IntentService {
 
     private void endWorkout() {
         endSession();
-//        unsubscribeFromSteps(); // TODO confirm unsubscribing destroys data
+        unsubscribeFromSteps(); // TODO confirm unsubscribing destroys data
         clearRecordingNotification();
         disconnectFitnessClient(); // possible to discconect before async requests are made
     }
 
     private void unsubscribeFromSteps() {
-        unsubscribe(DataType.TYPE_STEP_COUNT_DELTA);
-        unsubscribe(DataType.TYPE_STEP_COUNT_CADENCE);
-        unsubscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
+        if (UNSUBSCRIBE_TO_STEPS) {
+            unsubscribe(DataType.TYPE_STEP_COUNT_DELTA);
+            unsubscribe(DataType.TYPE_STEP_COUNT_CADENCE);
+            unsubscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
+        }
     }
 
     private void disconnectFitnessClient() {
         if (googleFitAPIHelper.getClient().isConnected()) {
-//            googleFitAPIHelper.getClient().disconnect(); // fIXME do we really need to disconnect client? even at {@link MainActivity}
+//            googleFitAPIHelper.getClient().disconnect(); // FIXME do we really need to disconnect client? even at {@link MainActivity}
         }
     }
 
     private void endSessionAndCreateNewOne(String oldSessionId) {
         Log.i(LogConstants.LOG_ID, "Ending session (" + oldSessionId + ") and creating a new one");
 
-        if (googleFitAPIHelper.isConnected()){
+        if (googleFitAPIHelper.isConnected()) {
             PendingResult<SessionStopResult> pendingResult = Fitness.SessionsApi.stopSession(googleFitAPIHelper.getClient(), oldSessionId);
             pendingResult.setResultCallback(new ResultCallback<SessionStopResult>() {
                 @Override
@@ -258,9 +261,11 @@ public class GcmIntentService extends IntentService {
                     }
                 }
             });
-        } else {
+        } else if (!lastFitSessionId.isEmpty()) {
             Log.i(LogConstants.LOG_ID, "A session ( " + lastFitSessionId + ")already existed, end it, and create a new one");
             endSessionAndCreateNewOne(lastFitSessionId); // Watchtout, can go in inifinite recursion
+        } else if (!googleFitAPIHelper.isConnected()) {
+            Log.w(LogConstants.LOG_ID, "Unable to start session b/c client is not connected!");
         }
 
 
@@ -356,9 +361,14 @@ public class GcmIntentService extends IntentService {
 
 
     private void subscribeToSteps() {
-        subscribe(DataType.TYPE_STEP_COUNT_DELTA);
-        subscribe(DataType.TYPE_STEP_COUNT_CADENCE);
-        subscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
+        // TODO JS Confirm that this is messing up the counting of steps for the original app.
+        // This is disabled b/c it seems to intefere with the step counter in the original.
+        if (SUBSCRIBE_TO_STEPS) {
+            subscribe(DataType.TYPE_STEP_COUNT_DELTA);
+            subscribe(DataType.TYPE_STEP_COUNT_CADENCE);
+            subscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
+        }
+
     }
 
     private void subscribe(DataType dataType) {

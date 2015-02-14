@@ -2,8 +2,11 @@ package com.standapp.preferences;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.standapp.activity.MainActivity;
+import com.standapp.logger.LogConstants;
+import com.standapp.util.AppInfo;
 
 /**
  * Created by John on 2/3/2015.
@@ -77,5 +80,11 @@ public class PreferenceAccess {
         SharedPreferences.Editor editor = getSharedPreferences().edit();
         editor.putString(PROPERTY_USER_ID, userId);
         return editor.commit();
+    }
+
+    public boolean clearRegId() {
+        int appVersion = AppInfo.getAppVersion(context);
+        Log.i(LogConstants.LOG_ID, "Clearing regId on app version " + appVersion);
+        return this.updateGCMRegistrationId(appVersion, "");
     }
 }

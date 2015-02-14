@@ -18,7 +18,6 @@ import com.standapp.activity.MainActivity;
 import com.standapp.activity.common.StandAppBaseActivity;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
 import com.standapp.logger.LogConstants;
-import com.standapp.preferences.PreferenceAccess;
 
 import javax.inject.Inject;
 
@@ -27,9 +26,6 @@ import butterknife.InjectView;
 import butterknife.OnClick;
 
 public class ChromeExtErrorActivity extends StandAppBaseActivity {
-
-    @Inject
-    PreferenceAccess preferenceAccess;
 
     @Inject
     GoogleFitAPIHelper googleFitAPIHelper;
@@ -43,6 +39,7 @@ public class ChromeExtErrorActivity extends StandAppBaseActivity {
         public void onConnected(Bundle bundle) {
             Log.i(LogConstants.LOG_ID, "Google Fit connected");
             googleFitAPIHelper.revokeFitPermissions(ChromeExtErrorActivity.this);
+            replaceThisActivity(new Intent(ChromeExtErrorActivity.this, MainActivity.class));
         }
 
         @Override
@@ -56,7 +53,6 @@ public class ChromeExtErrorActivity extends StandAppBaseActivity {
 
         }
     };
-
 
     private GoogleApiClient.OnConnectionFailedListener onConnectionFailedListener = new GoogleApiClient.OnConnectionFailedListener() {
         @Override
@@ -128,6 +124,11 @@ public class ChromeExtErrorActivity extends StandAppBaseActivity {
     @OnClick(R.id.btn_sign_in_different_account)
     public void onClickSignInDifferentAccount(Button button) {
         googleFitAPIHelper.connect();
+    }
+
+    private void replaceThisActivity(Intent intent) {
+        this.startActivity(intent);
+        this.finish();
     }
 
 }

@@ -13,7 +13,6 @@ import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.Fitness;
 import com.standapp.R;
-import com.standapp.google.gcm.GCMHelper;
 import com.standapp.logger.LogConstants;
 import com.standapp.preferences.PreferenceAccess;
 
@@ -25,12 +24,10 @@ public class GoogleFitAPIHelper {
     private final Context context;
     private GoogleApiClient mClient;
     private PreferenceAccess preferenceAccess;
-    private GCMHelper gcmHelper;
 
-    public GoogleFitAPIHelper(Context context, PreferenceAccess preferenceAccess, GCMHelper gcmHelper) {
+    public GoogleFitAPIHelper(Context context, PreferenceAccess preferenceAccess) {
         this.context = context;
         this.preferenceAccess = preferenceAccess;
-        this.gcmHelper = gcmHelper;
     }
 
     public void connect() {
@@ -73,6 +70,7 @@ public class GoogleFitAPIHelper {
         return mClient.isConnecting();
     }
 
+    // TODO JS refactor any calls to this into this class
     public GoogleApiClient getClient() {
         return mClient;
     }
@@ -82,7 +80,7 @@ public class GoogleFitAPIHelper {
      *
      * @param activity in which to display toast messages of results.
      */
-    public void revokeFitPermissions(final Activity activity) {
+    public void revokeFitPermissions(final Activity activity, final RevokeGoogleFitPermissionsListener revokePermissionsListener) {
         PendingResult<Status> pendingResult = Fitness.ConfigApi.disableFit(mClient);
         pendingResult.setResultCallback(new ResultCallback<Status>() {
             @Override
@@ -92,7 +90,8 @@ public class GoogleFitAPIHelper {
                     Toast.makeText(activity, activity.getString(R.string.toast_googlefit_disconnect_success), Toast.LENGTH_LONG).show();
                     preferenceAccess.updateUserAccount("");
                     preferenceAccess.updateUserId("");
-                    gcmHelper.clearRegId();
+                    preferenceAccess.clearRegId();
+                    revokePermissionsListener.onRevokedFitPermissions();
                 } else {
                     Toast.makeText(activity, activity.getString(R.string.toast_googlefit_disconnect_failed), Toast.LENGTH_LONG).show();
                 }
