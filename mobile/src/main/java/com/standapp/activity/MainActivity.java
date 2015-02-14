@@ -348,6 +348,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
     @Override
     public void onRevokedFitPermissions() {
+        // FIXME this isn't being invoked and causing the accountpiccker dialog to appear or is it?
         googleFitAPIHelper.connect();
     }
 }

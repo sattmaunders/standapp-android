@@ -17,6 +17,7 @@ import com.standapp.R;
 import com.standapp.activity.MainActivity;
 import com.standapp.activity.common.StandAppBaseActivity;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
+import com.standapp.google.googlefitapi.RevokeGoogleFitPermissionsListener;
 import com.standapp.logger.LogConstants;
 
 import javax.inject.Inject;
@@ -25,7 +26,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 
-public class ChromeExtErrorActivity extends StandAppBaseActivity {
+public class ChromeExtErrorActivity extends StandAppBaseActivity implements RevokeGoogleFitPermissionsListener {
 
     @Inject
     GoogleFitAPIHelper googleFitAPIHelper;
@@ -38,8 +39,7 @@ public class ChromeExtErrorActivity extends StandAppBaseActivity {
         @Override
         public void onConnected(Bundle bundle) {
             Log.i(LogConstants.LOG_ID, "Google Fit connected");
-            googleFitAPIHelper.revokeFitPermissions(ChromeExtErrorActivity.this);
-            replaceThisActivity(new Intent(ChromeExtErrorActivity.this, MainActivity.class));
+            googleFitAPIHelper.revokeFitPermissions(ChromeExtErrorActivity.this, ChromeExtErrorActivity.this);
         }
 
         @Override
@@ -131,4 +131,8 @@ public class ChromeExtErrorActivity extends StandAppBaseActivity {
         this.finish();
     }
 
+    @Override
+    public void onRevokedFitPermissions() {
+        replaceThisActivity(new Intent(ChromeExtErrorActivity.this, MainActivity.class));
+    }
 }
