@@ -40,8 +40,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-// TODO should use DI dagger injection.
-
 /**
  * This {@code IntentService} does the actual handling of the GCM message.
  * {@code GcmBroadcastReceiver} (a {@code WakefulBroadcastReceiver}) holds a
@@ -53,6 +51,7 @@ public class GcmIntentService extends IntentService {
     public static final int NOTIFICATION_ID = 1;
     public static final int NOTIFICATION_SESSION_ID = 1872;
 
+    // Dependencies not injected :(  // TODO should use DI dagger injection.
     private final PreferenceAccess preferenceAccess;
     private BackendServer backendServer;
     private GoogleFitAPIHelper googleFitAPIHelper;
@@ -98,7 +97,6 @@ public class GcmIntentService extends IntentService {
             backendServer = new BackendServer(Volley.newRequestQueue(this));
             setTypeOfWork(StandAppMessages.BREAK_END);
             initFitnessClientAndConnect();
-            // Send request end.break
             sendMessageToChromeToEndBreak();
             releaseWakeLock();
         } else {
