@@ -173,6 +173,10 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
                 // Initialize the ViewPager and set an adapter
                 pager.setAdapter(new PagerAdapter(getSupportFragmentManager()));
 
+                // Customize tab appearance:
+                tabs.setShouldExpand(true);
+                tabs.setIndicatorColor(getResources().getColor(R.color.extAccent));
+                tabs.setDividerColor(getResources().getColor(R.color.extHue1));
                 // Bind the tabs to the ViewPager
                 tabs.setViewPager(pager);
             }

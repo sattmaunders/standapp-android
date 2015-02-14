@@ -16,7 +16,6 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.utils.ColorTemplate;
 import com.standapp.R;
 import com.standapp.backend.UserInfoListener;
 import com.standapp.backend.UserInfoMediator;
@@ -127,6 +126,8 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         int colorBest = Color.BLACK;
         int colorPrevious = Color.parseColor("#2ecc71"); //Color.GREEN;
         int colorCurrent = Color.parseColor("#2196f3");  //Color.BLUE;
+        //int colorPrevious =  R.color.graphGreen;
+        //int colorCurrent = R.color.graphBlue;
 
 
         ArrayList<String> xVals = new ArrayList<String>();      //X axis label values
@@ -387,6 +388,8 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         //colors.add(Color.GREEN);
         colors.add(Color.parseColor("#2196f3"));
         colors.add(Color.parseColor("#2ecc71"));
+        //colors.add(R.color.graphBlue);
+        //colors.add(R.color.graphGreen); //this is broken for some reason - makes graphs grey
 
         set1.setColors(colors);
 
