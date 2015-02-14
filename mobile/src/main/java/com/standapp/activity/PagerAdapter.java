@@ -4,13 +4,15 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
+import com.astuetz.PagerSlidingTabStrip;
+import com.standapp.R;
 import com.standapp.fragment.GraphingCardFragment;
 import com.standapp.fragment.SuperAwesomeCardFragment;
 
 /**
  * Created by John on 2/9/2015.
  */
-public class PagerAdapter extends FragmentPagerAdapter {
+public class PagerAdapter extends FragmentPagerAdapter implements PagerSlidingTabStrip.IconTabProvider {
 
     private final String[] TITLES = { "Steps", "Standing", "Breaks" }; //"Home",
 
@@ -28,6 +30,23 @@ public class PagerAdapter extends FragmentPagerAdapter {
         return TITLES.length;
     }
 
+    @Override
+    public int getPageIconResId(int position) {
+        int data=0;
+        switch (position) {
+            case 0:
+                data = R.drawable.walking;
+                break;
+            case 1:
+                data = R.drawable.standing;
+                break;
+            case 2:
+                data = R.drawable.breaks;
+        }
+
+        return data;
+
+    }
     @Override
     public Fragment getItem(int position) {
         switch (position) {
