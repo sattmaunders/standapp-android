@@ -334,30 +334,34 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
                 break;
         }
 
-        Calendar calendar = Calendar.getInstance();
-        int day = calendar.get(Calendar.DAY_OF_WEEK);    // Sunday, day=1... Saturday, day=7
-        switch (day) {
-            case Calendar.SUNDAY:
-                curDay = curWeek[0];
-                break;
-            case Calendar.MONDAY:
-                curDay = curWeek[1];
-                break;
-            case Calendar.TUESDAY:
-                curDay = curWeek[2];
-                break;
-            case Calendar.WEDNESDAY:
-                curDay = curWeek[3];
-                break;
-            case Calendar.THURSDAY:
-                curDay = curWeek[4];
-                break;
-            case Calendar.FRIDAY:
-                curDay = curWeek[5];
-                break;
-            case Calendar.SATURDAY:
-                curDay = curWeek[6];
-                break;
+        if (curWeek.length == 7) {
+
+            Calendar calendar = Calendar.getInstance();
+            int day = calendar.get(Calendar.DAY_OF_WEEK);    // Sunday, day=1... Saturday, day=7
+            switch (day) {
+                case Calendar.SUNDAY:
+                    curDay = curWeek[0];
+                    break;
+                case Calendar.MONDAY:
+                    curDay = curWeek[1];
+                    break;
+                case Calendar.TUESDAY:
+                    curDay = curWeek[2];
+                    break;
+                case Calendar.WEDNESDAY:
+                    curDay = curWeek[3];
+                    break;
+                case Calendar.THURSDAY:
+                    curDay = curWeek[4];
+                    break;
+                case Calendar.FRIDAY:
+                    curDay = curWeek[5];
+                    break;
+                case Calendar.SATURDAY:
+                    curDay = curWeek[6];
+                    break;
+            }
+
         }
         //curDay = 600; //temporary number for debug displays (today's values are 0 in the JSON)
 
