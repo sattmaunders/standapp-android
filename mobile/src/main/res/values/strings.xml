@@ -28,5 +28,10 @@
     <string name="text_chrome_ext_sign_in_diff_account">Switch account</string>
     <string name="toast_googlefit_restart_app">Restart the app and try again.</string>
     <string name="no_google_play_services_apk">This app requires Google Play services</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="confirm_google_fit_revoke_permissions">Are you sure you want to disconnect from Google Fit?</string>
+    <string name="confirm_google_fit_revoke_permissions_title">Disconnect from Google Fit</string>
+    <string name="network_error">A network error occured. Please check your internet connection.</string>
 
 </resources>

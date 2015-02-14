@@ -9,4 +9,5 @@ public interface UserInfoListener {
     public void onUserRefreshed(User user);
     public void onEmailMissing(String userEmail);
     public void onUserNotFound(String userEmail);
+    public void onNetworkError();
 }

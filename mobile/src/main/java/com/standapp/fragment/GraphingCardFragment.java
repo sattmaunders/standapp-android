@@ -16,7 +16,6 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.utils.ColorTemplate;
 import com.standapp.R;
 import com.standapp.backend.UserInfoListener;
 import com.standapp.backend.UserInfoMediator;
@@ -424,6 +423,11 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
 
     @Override
     public void onUserNotFound(String userEmail) {
+
+    }
+
+    @Override
+    public void onNetworkError() {
 
     }
 }

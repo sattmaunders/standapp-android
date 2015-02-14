@@ -1,6 +1,8 @@
 package com.standapp.activity;
 
 import android.accounts.AccountManager;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
@@ -152,7 +154,23 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     }
 
     private boolean revokeGoogleFitPermissions() {
-        googleFitAPIHelper.revokeFitPermissions(this, this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.confirm_google_fit_revoke_permissions_title);
+        builder.setMessage(getString(R.string.confirm_google_fit_revoke_permissions));
+        builder.setIcon(R.drawable.sa_ic_fit);
+        builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.dismiss();
+                googleFitAPIHelper.revokeFitPermissions(MainActivity.this, MainActivity.this);
+            }
+        });
+        builder.setNegativeButton(getString(R.string.no), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.dismiss();
+            }
+        });
+        AlertDialog alert = builder.create();
+        alert.show();
         return true;
     }
 
@@ -323,6 +341,12 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         progressBar.setVisibility(View.GONE);
         preferenceAccess.clearRegId(); // probably not needed here as the user will revoke permissions and cause a clear
         startChromeExtensionErrorActivity(userEmail);
+    }
+
+    @Override
+    public void onNetworkError() {
+        Toast.makeText(this, getString(R.string.network_error), Toast.LENGTH_LONG);
+        startGenericErrorActivity();
     }
 
     private void startChromeExtensionErrorActivity(String userEmail) {

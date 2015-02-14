@@ -44,7 +44,10 @@ public class UserHelper {
         Response.ErrorListener errorListener = new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                if (error.networkResponse.statusCode == 400) {
+
+                if (error.networkResponse == null){
+                    userInfoMediator.notifyUserInfoListenersNetworkError();
+                } else if (error.networkResponse.statusCode == 400) {
                     userInfoMediator.notifyUserInfoListenersEmailMissing(userEmail);
                     // TODO JS throw exception b/c no email was created and report
                 } else if (error.networkResponse.statusCode == 404) {
