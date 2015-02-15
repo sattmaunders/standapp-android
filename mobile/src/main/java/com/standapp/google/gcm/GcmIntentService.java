@@ -77,8 +77,6 @@ public class GcmIntentService extends IntentService {
      * FIXME JS when is a better time to release the wakelock? maybe when the session has started for when
      * it is a startEvent, and when session has ended when.
      */
-
-
     @Override
     protected void onHandleIntent(Intent intent) {
         this.receivedMsgIntent = intent;
@@ -98,7 +96,6 @@ public class GcmIntentService extends IntentService {
             setTypeOfWork(StandAppMessages.BREAK_END);
             initFitnessClientAndConnect();
             sendMessageToChromeToEndBreak();
-            releaseWakeLock();
         } else {
             if (!extras.isEmpty()) {  // has effect of unparcelling Bundle
             /*
@@ -117,14 +114,13 @@ public class GcmIntentService extends IntentService {
                     } else if (extras.getString(BackendServer.GCM_FIELD_MESSAGE_KEY).equalsIgnoreCase(StandAppMessages.BREAK_END.toString())) {
                         setTypeOfWork(StandAppMessages.BREAK_END);
                         initFitnessClientAndConnect();
-                    } else {
-                        releaseWakeLock();
                     }
                 } else if (messageOriginatedFromPhone(extras)) {
                     Log.i(LogConstants.LOG_ID, "Ignored a gcm message from own phone device");
                 }
             }
         }
+        releaseWakeLock();
     }
 
     private boolean messageOriginatedFromPhone(Bundle extras) {
@@ -315,8 +311,6 @@ public class GcmIntentService extends IntentService {
             } else if (typeOfWork == StandAppMessages.BREAK_END) {
                 endWorkout();
             }
-
-            releaseWakeLock();
         }
 
         @Override
@@ -328,7 +322,6 @@ public class GcmIntentService extends IntentService {
             } else if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_SERVICE_DISCONNECTED) {
                 Log.i(LogConstants.LOG_ID, "Connection lost.  Reason: Service Disconnected");
             }
-            releaseWakeLock();
         }
     };
 
@@ -338,7 +331,6 @@ public class GcmIntentService extends IntentService {
         public void onConnectionFailed(ConnectionResult result) {
             Log.i(LogConstants.LOG_ID, "Connection failed. Cause: " + result.toString());
             sendNotificationOAuthResolution();
-            releaseWakeLock();
             return;
         }
     };
