@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">StandApp</string>
+    <string name="app_name">Standroid</string>
     <string name="hello_world">Hello world!</string>
-    <string name="chrome_ext_error">First you\'ll need to install the StandApp Chrome Extension and sign in as %1$s</string>
+    <string name="chrome_ext_error">First you\'ll need to install the Standroid Chrome Extension and sign in as %1$s</string>
     <string name="chrome_ext_error_link">http://goo.gl/b5NwZB</string>
     <string name="action_settings">Settings</string>
     <string name="action_unregister_listener">Unregister listener</string>
@@ -19,7 +19,6 @@
     <string name="notif_in_session_msg">Tap to end your break or return to your desk.</string>
     <string name="notif_in_session_title">Break in session</string>
     <string name="action_unregister_googlefitapi">Disconnect from Google Fit</string>
-    <string name="account_picker_msg">Select the account you used for the StandApp Chrome Extension.</string>
     <string name="toast_googlefit_disconnect_success">Disconnected from Google Fit</string>
     <string name="toast_googlefit_disconnect_failed">Unable to disconnect app from Google Fit.</string>
     <string name="toast_googlefit_disconnect_failed_notconnected">Unable to disconnect from Google Fit because you are not connected.</string>
