@@ -124,9 +124,9 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         int[] currentWeekSteps, int[] currentWeekOnFoot, int[] currentWeekBreak,
 */
         //Best = green, previous = blue, current = pinkish
-        int colorBest = R.color.extAccent;
-        int colorPrevious = R.color.extHue1;
-        int colorCurrent = R.color.graphGreen;
+        int colorBest = Color.parseColor(getString(R.color.extAccent));
+        int colorPrevious = Color.parseColor(getString(R.color.extHue1));
+        int colorCurrent = Color.parseColor(getString(R.color.graphGreen));
 
 
         ArrayList<String> xVals = new ArrayList<String>();      //X axis label values
@@ -385,8 +385,8 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         ArrayList<Integer> colors = new ArrayList<Integer>();
         //colors.add(ColorTemplate.getHoloBlue());
         //colors.add(Color.GREEN);
-        colors.add(Color.parseColor("#2196f3"));
-        colors.add(Color.parseColor("#2ecc71"));
+        colors.add(Color.parseColor(getString(R.color.graphBlue)));
+        colors.add(Color.parseColor(getString(R.color.graphGreen)));
         //colors.add(R.color.graphBlue);
         //colors.add(R.color.graphGreen); //this is broken for some reason - makes graphs grey
 
