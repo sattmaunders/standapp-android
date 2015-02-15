@@ -4,9 +4,13 @@ package com.standapp.app;
  * Created by John on 2/2/2015.
  */
 
+import android.content.Context;
+
 import com.standapp.annotations.GCMSenderID;
 import com.standapp.backend.UserInfoMediator;
 import com.standapp.common.AndroidAppModule;
+import com.standapp.common.ForApplication;
+import com.standapp.google.PackageInspector;
 import com.standapp.util.UserInfo;
 
 import javax.inject.Singleton;
@@ -43,6 +47,12 @@ public class StandAppScopeModule {
     @Singleton
     UserInfoMediator provideUserInfoMediator() {
         return new UserInfoMediator();
+    }
+
+    @Provides
+    @Singleton
+    PackageInspector providePackageInspector(@ForApplication Context context) {
+        return new PackageInspector(context);
     }
 
 }
