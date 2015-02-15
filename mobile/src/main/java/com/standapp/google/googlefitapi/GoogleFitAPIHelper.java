@@ -12,15 +12,21 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.Fitness;
+import com.google.android.gms.fitness.data.DataType;
+import com.google.android.gms.fitness.data.Session;
+import com.google.android.gms.fitness.result.SessionStopResult;
 import com.standapp.R;
 import com.standapp.logger.LogConstants;
 import com.standapp.preferences.PreferenceAccess;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by John on 2/9/2015.
  */
 public class GoogleFitAPIHelper {
 
+    public static final String TAG = GoogleFitAPIHelper.class.getSimpleName();
     private final Context context;
     private GoogleApiClient mClient;
     private PreferenceAccess preferenceAccess;
@@ -31,6 +37,7 @@ public class GoogleFitAPIHelper {
     }
 
     public void connect() {
+        Log.i(TAG, "connect");
         mClient.connect();
     }
 
@@ -48,6 +55,7 @@ public class GoogleFitAPIHelper {
      * @param onConnectionFailedListener
      */
     public void buildFitnessClient(GoogleApiClient.ConnectionCallbacks connectionCallbacks, GoogleApiClient.OnConnectionFailedListener onConnectionFailedListener) {
+        Log.i(TAG, "buildFitnessClient");
         mClient = new GoogleApiClient.Builder(context)
                 .addApi(Fitness.API)
                 .addScope(new Scope(Scopes.FITNESS_LOCATION_READ_WRITE))
@@ -65,26 +73,23 @@ public class GoogleFitAPIHelper {
 
     public void unregisterListeners(GoogleApiClient.ConnectionCallbacks connectionCallbacks, GoogleApiClient.OnConnectionFailedListener onConnectionFailedListener){
         if (connectionCallbacks != null){
+            Log.i(TAG, "unregisterConnectionCallbacks");
             mClient.unregisterConnectionCallbacks(connectionCallbacks);
         }
 
         if (onConnectionFailedListener != null){
+            Log.i(TAG, "unregisterConnectionFailedListener");
             mClient.unregisterConnectionFailedListener(onConnectionFailedListener);
         }
-
     }
 
     public void disconnect() {
+        Log.i(TAG, "disconnect");
         mClient.disconnect();
     }
 
     public boolean isConnecting() {
         return mClient.isConnecting();
-    }
-
-    // TODO JS refactor any calls to this into this class
-    public GoogleApiClient getClient() {
-        return mClient;
     }
 
     /**
@@ -94,6 +99,7 @@ public class GoogleFitAPIHelper {
      */
     public void revokeFitPermissions(final Activity activity, final RevokeGoogleFitPermissionsListener revokePermissionsListener) {
         if (mClient != null && mClient.isConnected()) {
+            Log.i(TAG, "disableFit");
             PendingResult<Status> pendingResult = Fitness.ConfigApi.disableFit(mClient);
             pendingResult.setResultCallback(new ResultCallback<Status>() {
                 @Override
@@ -114,5 +120,30 @@ public class GoogleFitAPIHelper {
             Toast.makeText(activity, activity.getString(R.string.toast_googlefit_disconnect_failed_notconnected), Toast.LENGTH_LONG).show();
         }
 
+    }
+
+    public PendingResult<SessionStopResult> stopSession(String oldSessionId) {
+        Log.i(TAG, "stopSession: " + oldSessionId);
+        return Fitness.SessionsApi.stopSession(mClient, oldSessionId);
+    }
+
+    public PendingResult<Status> startSession(Session session) {
+        Log.i(TAG, "startSession: " + session.getIdentifier());
+        return Fitness.SessionsApi.startSession(mClient, session);
+    }
+
+    public PendingResult<Status> unsubscribe(final DataType dataType) {
+        Log.i(TAG, "unsubscribe: " + dataType.getName());
+        return Fitness.RecordingApi.unsubscribe(mClient, dataType);
+    }
+
+    public PendingResult<Status> subscribe(final DataType dataType) {
+        Log.i(TAG, "subscribe: " + dataType.getName());
+        return Fitness.RecordingApi.subscribe(mClient, dataType);
+    }
+
+    public void blockConnect() {
+        Log.i(TAG, "block connect");
+        mClient.blockingConnect(1, TimeUnit.MINUTES);
     }
 }
