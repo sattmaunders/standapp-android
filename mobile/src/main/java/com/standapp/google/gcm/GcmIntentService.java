@@ -60,7 +60,6 @@ public class GcmIntentService extends IntentService {
     private NotificationManager mNotificationManager;
     private PendingIntent mainActivityContentIntent;
     private StandAppMessages typeOfWork = null;
-    private Intent receivedMsgIntent; // key for wakeelock
 
     private static final boolean SUBSCRIBE_TO_STEPS = false;
     private static final boolean UNSUBSCRIBE_TO_STEPS = false;
@@ -79,7 +78,6 @@ public class GcmIntentService extends IntentService {
      */
     @Override
     protected void onHandleIntent(Intent intent) {
-        this.receivedMsgIntent = intent;
 
         mainActivityContentIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
         mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -98,14 +96,8 @@ public class GcmIntentService extends IntentService {
             sendMessageToChromeToEndBreak();
         } else {
             if (!extras.isEmpty()) {  // has effect of unparcelling Bundle
-            /*
-             * Filter messages based on message type. Since it is likely that GCM will be
-             * extended in the future with new message types, just ignore any message types you're
-             * not interested in, or that you don't recognize.
-             */
                 if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
                 } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
-                    // If it's a regular GCM message, do some work.
                 } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType) && !messageOriginatedFromPhone(extras)) {
                     Log.i(LogConstants.LOG_ID, "Received: " + extras.toString());
                     if (extras.getString(BackendServer.GCM_FIELD_MESSAGE_KEY).equalsIgnoreCase(StandAppMessages.BREAK_START.toString())) {
@@ -120,7 +112,7 @@ public class GcmIntentService extends IntentService {
                 }
             }
         }
-        releaseWakeLock();
+        releaseWakeLock(intent);
     }
 
     private boolean messageOriginatedFromPhone(Bundle extras) {
@@ -147,9 +139,9 @@ public class GcmIntentService extends IntentService {
         }
     }
 
-    private void releaseWakeLock() {
+    private void releaseWakeLock(Intent intent) {
         Log.i(LogConstants.LOG_ID, "Releasing wakelock");
-        GcmBroadcastReceiver.completeWakefulIntent(this.receivedMsgIntent);
+        GcmBroadcastReceiver.completeWakefulIntent(intent);
     }
 
     private void startWorkout() {
