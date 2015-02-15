@@ -3,5 +3,5 @@
 /.idea
 .DS_Store
 /build
-*.apk
-mobile/manifest*report.txt
+wear*.apk
+mobile/release/manifest*report.txt
