@@ -297,7 +297,7 @@ public class GcmIntentService extends IntentService {
         String msg = getResources().getString(R.string.notif_in_session_msg);
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.sa_ic_applauncher)
+                        .setSmallIcon(R.drawable.ic_notif_workout)
                         .setContentTitle(getResources().getString(R.string.notif_in_session_title))
                         .setStyle(new NotificationCompat.BigTextStyle()
                                 .bigText(msg))
