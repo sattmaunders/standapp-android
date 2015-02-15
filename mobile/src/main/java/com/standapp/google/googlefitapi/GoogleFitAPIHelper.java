@@ -34,11 +34,6 @@ public class GoogleFitAPIHelper {
         mClient.connect();
     }
 
-    public boolean isConnected() {
-        return mClient.isConnected();
-    }
-
-
     /**
      * Build a {@link com.google.android.gms.common.api.GoogleApiClient} that will authenticate the user and allow the application
      * to connect to Fitness APIs. The scopes included should match the scopes your app needs
@@ -46,8 +41,9 @@ public class GoogleFitAPIHelper {
      * and in those cases, there will be a known resolution, which the OnConnectionFailedListener()
      * can address. Examples of this include the user never having signed in before, or having
      * multiple accounts on the device and needing to specify which account to use, etc.
-     *
+     * <p/>
      * TODO JS should this be in constructor?
+     *
      * @param connectionCallbacks
      * @param onConnectionFailedListener
      */
@@ -60,6 +56,22 @@ public class GoogleFitAPIHelper {
                 .addConnectionCallbacks(connectionCallbacks)
                 .addOnConnectionFailedListener(onConnectionFailedListener)
                 .build();
+    }
+
+
+    public boolean isConnected() {
+        return mClient.isConnected();
+    }
+
+    public void unregisterListeners(GoogleApiClient.ConnectionCallbacks connectionCallbacks, GoogleApiClient.OnConnectionFailedListener onConnectionFailedListener){
+        if (connectionCallbacks != null){
+            mClient.unregisterConnectionCallbacks(connectionCallbacks);
+        }
+
+        if (onConnectionFailedListener != null){
+            mClient.unregisterConnectionFailedListener(onConnectionFailedListener);
+        }
+
     }
 
     public void disconnect() {
@@ -81,21 +93,26 @@ public class GoogleFitAPIHelper {
      * @param activity in which to display toast messages of results.
      */
     public void revokeFitPermissions(final Activity activity, final RevokeGoogleFitPermissionsListener revokePermissionsListener) {
-        PendingResult<Status> pendingResult = Fitness.ConfigApi.disableFit(mClient);
-        pendingResult.setResultCallback(new ResultCallback<Status>() {
-            @Override
-            public void onResult(Status status) {
-                Log.i(LogConstants.LOG_ID, "Disconnect fit " + status.toString() + ", code " + status.getStatus().getStatusCode());
-                if (status.isSuccess()){
-                    Toast.makeText(activity, activity.getString(R.string.toast_googlefit_disconnect_success), Toast.LENGTH_LONG).show();
-                    preferenceAccess.updateUserAccount("");
-                    preferenceAccess.updateUserId("");
-                    preferenceAccess.clearRegId();
-                    revokePermissionsListener.onRevokedFitPermissions();
-                } else {
-                    Toast.makeText(activity, activity.getString(R.string.toast_googlefit_disconnect_failed), Toast.LENGTH_LONG).show();
+        if (mClient != null && mClient.isConnected()) {
+            PendingResult<Status> pendingResult = Fitness.ConfigApi.disableFit(mClient);
+            pendingResult.setResultCallback(new ResultCallback<Status>() {
+                @Override
+                public void onResult(Status status) {
+                    Log.i(LogConstants.LOG_ID, "Disconnect fit " + status.toString() + ", code " + status.getStatus().getStatusCode());
+                    if (status.isSuccess()) {
+                        Toast.makeText(activity, activity.getString(R.string.toast_googlefit_disconnect_success), Toast.LENGTH_LONG).show();
+                        preferenceAccess.updateUserAccount("");
+                        preferenceAccess.updateUserId("");
+                        preferenceAccess.clearRegId();
+                        revokePermissionsListener.onRevokedFitPermissions();
+                    } else {
+                        Toast.makeText(activity, activity.getString(R.string.toast_googlefit_disconnect_failed), Toast.LENGTH_LONG).show();
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            Toast.makeText(activity, activity.getString(R.string.toast_googlefit_disconnect_failed_notconnected), Toast.LENGTH_LONG).show();
+        }
+
     }
 }

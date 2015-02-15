@@ -249,9 +249,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     protected void onStop() {
         super.onStop();
-        if (googleFitAPIHelper.isConnected()) {
-            googleFitAPIHelper.disconnect();
-        }
     }
 
     @Override
@@ -283,6 +280,12 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     protected void onDestroy() {
         super.onDestroy();
         userInfoMediator.unregisterUserInfoListener(this);
+
+        googleFitAPIHelper.unregisterListeners(connectionCallbacks, onConnectionFailedListener);
+        if (googleFitAPIHelper.isConnected()) {
+            googleFitAPIHelper.disconnect();
+        }
+
     }
 
 
