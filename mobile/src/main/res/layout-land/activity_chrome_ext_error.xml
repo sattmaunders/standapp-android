@@ -55,9 +55,7 @@
             android:textStyle="bold"
             android:textColor="@android:color/white"
             android:id="@+id/tv_chromeext_error"
-            android:layout_alignParentTop="true"
-            android:layout_toRightOf="@+id/iv_chromext_error"
-            android:layout_toEndOf="@+id/iv_chromext_error" />
+            android:layout_alignParentTop="true" />
 
         <Button
             android:text="@string/already_have_ext"
