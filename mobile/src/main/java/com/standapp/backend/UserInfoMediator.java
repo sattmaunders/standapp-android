@@ -38,6 +38,12 @@ public class UserInfoMediator {
         }
     }
 
+    public void notifyUserInfoListenersNetworkError(){
+        for (UserInfoListener userInfoListener : userInfoListenerList){
+            userInfoListener.onNetworkError();
+        }
+    }
+
     public void notifyUserInfoListenersUserNotFound(String userEmail){
         for (UserInfoListener userInfoListener : userInfoListenerList){
             userInfoListener.onUserNotFound(userEmail);

@@ -1,6 +1,8 @@
 package com.standapp.activity;
 
 import android.accounts.AccountManager;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
@@ -12,15 +14,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.fitness.Fitness;
 import com.standapp.R;
 import com.standapp.activity.common.StandAppBaseActionBarActivity;
 import com.standapp.activity.error.ChromeExtErrorActivity;
@@ -33,6 +32,7 @@ import com.standapp.google.GooglePlayServicesHelper;
 import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.gcm.GCMHelperListener;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
+import com.standapp.google.googlefitapi.RevokeGoogleFitPermissionsListener;
 import com.standapp.logger.LogConstants;
 import com.standapp.preferences.PreferenceAccess;
 import com.standapp.util.User;
@@ -63,7 +63,7 @@ import butterknife.InjectView;
              * onRegisterSuccess/onAlreadyRegistered (*success*)
  *
  */
-public class MainActivity extends StandAppBaseActionBarActivity implements GCMHelperListener, UserInfoListener, OnFragmentCreatedListener {
+public class MainActivity extends StandAppBaseActionBarActivity implements GCMHelperListener, UserInfoListener, OnFragmentCreatedListener, RevokeGoogleFitPermissionsListener {
 
     // [START auth_variable_references]
     private static final int REQUEST_OAUTH = 1;
@@ -74,6 +74,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
      * consent dialog. This avoids common duplications as might happen on screen rotations, etc.
      */
     private static final String AUTH_PENDING = "auth_state_pending";
+    public static final String INTENT_PARAM_USER_EMAIL = "USER_EMAIL";
     private boolean authInProgress = false;
 
     @InjectView(R.id.tabs)
@@ -131,7 +132,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle(null);
-        getSupportActionBar().setLogo(R.drawable.sa_ic_applauncher);
+        getSupportActionBar().setLogo(R.drawable.sa_ic_actionbaricon);
     }
 
     @Override
@@ -143,24 +144,34 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-
         if (id == R.id.action_unregister_googlefitapi) {
-            PendingResult<Status> pendingResult = Fitness.ConfigApi.disableFit(googleFitAPIHelper.getClient());
-            pendingResult.setResultCallback(new ResultCallback<Status>() {
-                @Override
-                public void onResult(Status status) {
-                    Log.i(LogConstants.LOG_ID, "Disconnect fit " + status.toString() + ", code " + status.getStatus().getStatusCode());
-                }
-            });
-            return true;
+            return revokeGoogleFitPermissions();
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private boolean revokeGoogleFitPermissions() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.confirm_google_fit_revoke_permissions_title);
+        builder.setMessage(getString(R.string.confirm_google_fit_revoke_permissions));
+        builder.setIcon(R.drawable.sa_ic_fit);
+        builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.dismiss();
+                googleFitAPIHelper.revokeFitPermissions(MainActivity.this, MainActivity.this);
+            }
+        });
+        builder.setNegativeButton(getString(R.string.no), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.dismiss();
+            }
+        });
+        AlertDialog alert = builder.create();
+        alert.show();
+        return true;
     }
 
     private GoogleApiClient.ConnectionCallbacks connectionCallbacks = new GoogleApiClient.ConnectionCallbacks() {
@@ -179,6 +190,8 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
                 tabs.setDividerColor(getResources().getColor(R.color.extHue1));
                 // Bind the tabs to the ViewPager
                 tabs.setViewPager(pager);
+
+                // This will trigger onFragmentCreated
             }
         }
 
@@ -255,7 +268,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
                     googleFitAPIHelper.connect();
                 }
             } else {
-                // TODO WTF
+                startGenericErrorActivity();
             }
         }
     }
@@ -296,7 +309,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     }
 
     private void startGenericErrorActivity() {
-        replaceThisActivity(GenericErrorActivity.class);
+        replaceThisActivity(new Intent(this, GenericErrorActivity.class));
     }
 
     @Override
@@ -315,7 +328,8 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             gcmHelper.init(this, user.get_id());
         } else {
             Log.i(LogConstants.LOG_ID, "No valid Google Play Services APK found.");
-            // TODO Throw exception
+            Log.i(LogConstants.LOG_ID, "No valid Google Play Services APK found.");
+            Toast.makeText(this, getString(R.string.no_google_play_services_apk), Toast.LENGTH_LONG);
         }
 
     }
@@ -328,16 +342,24 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     public void onUserNotFound(String userEmail) {
         logMsg("user not found " + userEmail);
-        gcmHelper.clearRegId();
-        startChromeExtensionErrorActivity();
+        progressBar.setVisibility(View.GONE);
+        preferenceAccess.clearRegId(); // probably not needed here as the user will revoke permissions and cause a clear
+        startChromeExtensionErrorActivity(userEmail);
     }
 
-    private void startChromeExtensionErrorActivity() {
-        replaceThisActivity(ChromeExtErrorActivity.class);
+    @Override
+    public void onNetworkError() {
+        Toast.makeText(this, getString(R.string.network_error), Toast.LENGTH_LONG);
+        startGenericErrorActivity();
     }
 
-    private void replaceThisActivity(Class classActivity) {
-        Intent intent = new Intent(this, classActivity);
+    private void startChromeExtensionErrorActivity(String userEmail) {
+        Intent intent = new Intent(this, ChromeExtErrorActivity.class);
+        intent.putExtra(INTENT_PARAM_USER_EMAIL, userEmail);
+        replaceThisActivity(intent);
+    }
+
+    private void replaceThisActivity(Intent intent) {
         this.startActivity(intent);
         this.finish();
     }
@@ -352,4 +374,9 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         }
     }
 
+    @Override
+    public void onRevokedFitPermissions() {
+        // FIXME this isn't being invoked and causing the accountpiccker dialog to appear or is it?
+        googleFitAPIHelper.connect();
+    }
 }

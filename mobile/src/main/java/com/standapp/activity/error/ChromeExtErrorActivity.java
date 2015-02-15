@@ -2,26 +2,87 @@ package com.standapp.activity.error;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.standapp.R;
 import com.standapp.activity.MainActivity;
 import com.standapp.activity.common.StandAppBaseActivity;
+import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
+import com.standapp.google.googlefitapi.RevokeGoogleFitPermissionsListener;
+import com.standapp.logger.LogConstants;
+
+import javax.inject.Inject;
 
 import butterknife.ButterKnife;
+import butterknife.InjectView;
 import butterknife.OnClick;
 
-public class ChromeExtErrorActivity extends StandAppBaseActivity {
+public class ChromeExtErrorActivity extends StandAppBaseActivity implements RevokeGoogleFitPermissionsListener {
+
+    @Inject
+    GoogleFitAPIHelper googleFitAPIHelper;
+
+    @InjectView(R.id.tv_chromeext_error)
+    TextView textInstructions;
+
+
+    private GoogleApiClient.ConnectionCallbacks connectionCallbacks = new GoogleApiClient.ConnectionCallbacks() {
+        @Override
+        public void onConnected(Bundle bundle) {
+            Log.i(LogConstants.LOG_ID, "Google Fit connected");
+            googleFitAPIHelper.revokeFitPermissions(ChromeExtErrorActivity.this, ChromeExtErrorActivity.this);
+        }
+
+        @Override
+        public void onConnectionSuspended(int i) {
+            Toast.makeText(ChromeExtErrorActivity.this, ChromeExtErrorActivity.this.getString(R.string.toast_googlefit_disconnect_failed), Toast.LENGTH_LONG).show();
+            if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_NETWORK_LOST) {
+                Log.i(LogConstants.LOG_ID, "Connection lost.  Cause: Network Lost.");
+            } else if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_SERVICE_DISCONNECTED) {
+                Log.i(LogConstants.LOG_ID, "Connection lost.  Reason: Service Disconnected");
+            }
+
+        }
+    };
+
+    private GoogleApiClient.OnConnectionFailedListener onConnectionFailedListener = new GoogleApiClient.OnConnectionFailedListener() {
+        @Override
+        public void onConnectionFailed(ConnectionResult result) {
+            Log.i(LogConstants.LOG_ID, "Connection failed. Cause: " + result.toString());
+            if (!result.hasResolution()) {
+                GooglePlayServicesUtil.getErrorDialog(result.getErrorCode(), ChromeExtErrorActivity.this, 0).show();
+                return;
+            } else {
+                Toast.makeText(ChromeExtErrorActivity.this, ChromeExtErrorActivity.this.getString(R.string.toast_googlefit_disconnect_failed), Toast.LENGTH_SHORT).show();
+                Toast.makeText(ChromeExtErrorActivity.this, getResources().getString(R.string.toast_googlefit_restart_app), Toast.LENGTH_LONG).show();
+            }
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chrome_ext_error);
         ButterKnife.inject(this);
+
+        setTextInstructions();
+        googleFitAPIHelper.buildFitnessClient(connectionCallbacks, onConnectionFailedListener);
+    }
+
+    private void setTextInstructions() {
+        Intent myIntent = getIntent(); // gets the previously created intent
+        String userEmail = myIntent.getStringExtra(MainActivity.INTENT_PARAM_USER_EMAIL);
+        textInstructions.setText(getString(R.string.chrome_ext_error, userEmail));
     }
 
 
@@ -60,4 +121,18 @@ public class ChromeExtErrorActivity extends StandAppBaseActivity {
         this.finish();
     }
 
+    @OnClick(R.id.btn_sign_in_different_account)
+    public void onClickSignInDifferentAccount(Button button) {
+        googleFitAPIHelper.connect();
+    }
+
+    private void replaceThisActivity(Intent intent) {
+        this.startActivity(intent);
+        this.finish();
+    }
+
+    @Override
+    public void onRevokedFitPermissions() {
+        replaceThisActivity(new Intent(ChromeExtErrorActivity.this, MainActivity.class));
+    }
 }

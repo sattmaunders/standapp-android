@@ -428,4 +428,9 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
     public void onUserNotFound(String userEmail) {
 
     }
+
+    @Override
+    public void onNetworkError() {
+
+    }
 }

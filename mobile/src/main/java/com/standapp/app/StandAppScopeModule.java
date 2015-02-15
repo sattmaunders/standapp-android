@@ -4,13 +4,9 @@ package com.standapp.app;
  * Created by John on 2/2/2015.
  */
 
-import android.content.Context;
-
 import com.standapp.annotations.GCMSenderID;
 import com.standapp.backend.UserInfoMediator;
 import com.standapp.common.AndroidAppModule;
-import com.standapp.common.ForApplication;
-import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
 import com.standapp.util.UserInfo;
 
 import javax.inject.Singleton;
@@ -41,11 +37,6 @@ public class StandAppScopeModule {
     @Singleton
     UserInfo provideUserInfo(){
         return new UserInfo();
-    }
-
-    @Provides
-    GoogleFitAPIHelper provideGoogleFitAPIHelper(@ForApplication Context context) {
-        return new GoogleFitAPIHelper(context);
     }
 
     @Provides

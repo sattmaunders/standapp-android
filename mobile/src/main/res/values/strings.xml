@@ -3,8 +3,8 @@
 
     <string name="app_name">StandApp</string>
     <string name="hello_world">Hello world!</string>
-    <string name="chrome_ext_error">First you\'ll need to hit up the Chrome Extension app</string>
-    <string name="chrome_ext_error_link">http://Standroid.com/Extension</string>
+    <string name="chrome_ext_error">First you\'ll need to install the StandApp Chrome Extension app and sign in as %1$s</string>
+    <string name="chrome_ext_error_link">http://goo.gl/b5NwZB</string>
     <string name="action_settings">Settings</string>
     <string name="send">Send</string>
     <string name="clear">Clear</string>
@@ -14,7 +14,7 @@
     <string name="title_activity_generic_error">GenericErrorActivity</string>
     <string name="generic_error">Unable to connect to server</string>
     <string name="btn_try_again">Tap to try again</string>
-    <string name="already_have_ext">I already have the extension</string>
+    <string name="already_have_ext">Try again</string>
 
 
     <string name="notif_oauth_title">Problem connecting to Google Fit</string>
@@ -23,5 +23,15 @@
     <string name="notif_in_session_title">Break in session</string>
     <string name="action_unregister_googlefitapi">Disconnect app from Google Fit</string>
     <string name="account_picker_msg">Select the account you used for the StandApp Chrome Extension.</string>
+    <string name="toast_googlefit_disconnect_success">This app is disconnected from Google Fit</string>
+    <string name="toast_googlefit_disconnect_failed">Unable to disconnect app from Google Fit.</string>
+    <string name="text_chrome_ext_sign_in_diff_account">Switch account</string>
+    <string name="toast_googlefit_restart_app">Restart the app and try again.</string>
+    <string name="no_google_play_services_apk">This app requires Google Play services</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="confirm_google_fit_revoke_permissions">Are you sure you want to disconnect from Google Fit?</string>
+    <string name="confirm_google_fit_revoke_permissions_title">Disconnect from Google Fit</string>
+    <string name="network_error">A network error occured. Please check your internet connection.</string>
 
 </resources>

@@ -40,8 +40,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-// TODO should use DI dagger injection.
-
 /**
  * This {@code IntentService} does the actual handling of the GCM message.
  * {@code GcmBroadcastReceiver} (a {@code WakefulBroadcastReceiver}) holds a
@@ -51,25 +49,26 @@ import java.util.concurrent.TimeUnit;
  */
 public class GcmIntentService extends IntentService {
     public static final int NOTIFICATION_ID = 1;
-    public static final int NOTIFICATION_SESSION_ID = 187;
+    public static final int NOTIFICATION_SESSION_ID = 1872;
 
-    private static final String DATE_FORMAT = "yyyy.MM.dd G 'at' HH:mm:ss z";
+    // Dependencies not injected :(  // TODO should use DI dagger injection.
     private final PreferenceAccess preferenceAccess;
     private BackendServer backendServer;
-//    private static final DataType TYPE_STEP_COUNT_CUMULATIVE = DataType.TYPE_STEP_COUNT_CUMULATIVE;
+    private GoogleFitAPIHelper googleFitAPIHelper;
+
 
     private NotificationManager mNotificationManager;
-    private NotificationCompat.Builder builder;
-    private GoogleFitAPIHelper googleFitAPIHelper;
     private PendingIntent mainActivityContentIntent;
     private StandAppMessages typeOfWork = null;
-    private Intent receivedMsgIntent; // key for wakeelock
+
+    private static final boolean SUBSCRIBE_TO_STEPS = false;
+    private static final boolean UNSUBSCRIBE_TO_STEPS = false;
 
 
     public GcmIntentService() {
         super("GcmIntentService");
-        googleFitAPIHelper = new GoogleFitAPIHelper(this);
         preferenceAccess = new PreferenceAccess(this);
+        googleFitAPIHelper = new GoogleFitAPIHelper(this, preferenceAccess);
     }
 
 
@@ -77,11 +76,8 @@ public class GcmIntentService extends IntentService {
      * FIXME JS when is a better time to release the wakelock? maybe when the session has started for when
      * it is a startEvent, and when session has ended when.
      */
-
-
     @Override
     protected void onHandleIntent(Intent intent) {
-        this.receivedMsgIntent = intent;
 
         mainActivityContentIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
         mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -97,21 +93,11 @@ public class GcmIntentService extends IntentService {
             backendServer = new BackendServer(Volley.newRequestQueue(this));
             setTypeOfWork(StandAppMessages.BREAK_END);
             initFitnessClientAndConnect();
-            // Send request end.break
             sendMessageToChromeToEndBreak();
-            releaseWakeLock();
         } else {
             if (!extras.isEmpty()) {  // has effect of unparcelling Bundle
-            /*
-             * Filter messages based on message type. Since it is likely that GCM will be
-             * extended in the future with new message types, just ignore any message types you're
-             * not interested in, or that you don't recognize.
-             */
                 if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
-                    sendNotification("Send error: " + extras.toString());
                 } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
-                    sendNotification("Deleted messages on server: " + extras.toString());
-                    // If it's a regular GCM message, do some work.
                 } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType) && !messageOriginatedFromPhone(extras)) {
                     Log.i(LogConstants.LOG_ID, "Received: " + extras.toString());
                     if (extras.getString(BackendServer.GCM_FIELD_MESSAGE_KEY).equalsIgnoreCase(StandAppMessages.BREAK_START.toString())) {
@@ -120,14 +106,13 @@ public class GcmIntentService extends IntentService {
                     } else if (extras.getString(BackendServer.GCM_FIELD_MESSAGE_KEY).equalsIgnoreCase(StandAppMessages.BREAK_END.toString())) {
                         setTypeOfWork(StandAppMessages.BREAK_END);
                         initFitnessClientAndConnect();
-                    } else {
-                        releaseWakeLock();
                     }
                 } else if (messageOriginatedFromPhone(extras)) {
                     Log.i(LogConstants.LOG_ID, "Ignored a gcm message from own phone device");
                 }
             }
         }
+        releaseWakeLock(intent);
     }
 
     private boolean messageOriginatedFromPhone(Bundle extras) {
@@ -154,9 +139,9 @@ public class GcmIntentService extends IntentService {
         }
     }
 
-    private void releaseWakeLock() {
+    private void releaseWakeLock(Intent intent) {
         Log.i(LogConstants.LOG_ID, "Releasing wakelock");
-        GcmBroadcastReceiver.completeWakefulIntent(this.receivedMsgIntent);
+        GcmBroadcastReceiver.completeWakefulIntent(intent);
     }
 
     private void startWorkout() {
@@ -167,40 +152,44 @@ public class GcmIntentService extends IntentService {
 
     private void endWorkout() {
         endSession();
-//        unsubscribeFromSteps(); // TODO confirm unsubscribing destroys data
+        unsubscribeFromSteps(); // TODO confirm unsubscribing destroys data
         clearRecordingNotification();
         disconnectFitnessClient(); // possible to discconect before async requests are made
     }
 
     private void unsubscribeFromSteps() {
-        unsubscribe(DataType.TYPE_STEP_COUNT_DELTA);
-        unsubscribe(DataType.TYPE_STEP_COUNT_CADENCE);
-        unsubscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
+        if (UNSUBSCRIBE_TO_STEPS) {
+            unsubscribe(DataType.TYPE_STEP_COUNT_DELTA);
+            unsubscribe(DataType.TYPE_STEP_COUNT_CADENCE);
+            unsubscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
+        }
     }
 
     private void disconnectFitnessClient() {
         if (googleFitAPIHelper.getClient().isConnected()) {
-//            googleFitAPIHelper.getClient().disconnect(); // fIXME do we really need to disconnect client? even at {@link MainActivity}
+//            googleFitAPIHelper.getClient().disconnect(); // FIXME do we really need to disconnect client? even at {@link MainActivity}
         }
     }
 
     private void endSessionAndCreateNewOne(String oldSessionId) {
         Log.i(LogConstants.LOG_ID, "Ending session (" + oldSessionId + ") and creating a new one");
 
-        PendingResult<SessionStopResult> pendingResult = Fitness.SessionsApi.stopSession(googleFitAPIHelper.getClient(), oldSessionId);
-        pendingResult.setResultCallback(new ResultCallback<SessionStopResult>() {
-            @Override
-            public void onResult(SessionStopResult sessionStopResult) {
-                Log.i(LogConstants.LOG_ID, "endSession toString: " + sessionStopResult.toString() + " endSession code " + sessionStopResult.getStatus().getStatusCode());
-                if (sessionStopResult.getSessions() != null && sessionStopResult.getSessions().size() > 0) {
-                    Log.i(LogConstants.LOG_ID, "Ended some session properly, # of sessions ended " + sessionStopResult.getSessions().size());
+        if (googleFitAPIHelper.isConnected()) {
+            PendingResult<SessionStopResult> pendingResult = Fitness.SessionsApi.stopSession(googleFitAPIHelper.getClient(), oldSessionId);
+            pendingResult.setResultCallback(new ResultCallback<SessionStopResult>() {
+                @Override
+                public void onResult(SessionStopResult sessionStopResult) {
+                    Log.i(LogConstants.LOG_ID, "endSession toString: " + sessionStopResult.toString() + " endSession code " + sessionStopResult.getStatus().getStatusCode());
+                    if (sessionStopResult.getSessions() != null && sessionStopResult.getSessions().size() > 0) {
+                        Log.i(LogConstants.LOG_ID, "Ended some session properly, # of sessions ended " + sessionStopResult.getSessions().size());
+                    }
+                    if (preferenceAccess.updateLastFitSessionId("")) {
+                        Log.i(LogConstants.LOG_ID, "Updated session id preferences by clearing it");
+                        createSession();
+                    }
                 }
-                if (preferenceAccess.updateLastFitSessionId("")) {
-                    Log.i(LogConstants.LOG_ID, "Updated session id preferences by clearing it");
-                    createSession();
-                }
-            }
-        });
+            });
+        }
     }
 
 
@@ -242,7 +231,8 @@ public class GcmIntentService extends IntentService {
         Log.i(LogConstants.LOG_ID, "When creating session, the last session id: " + lastFitSessionId);
 
 
-        if (lastFitSessionId.isEmpty()) {
+        // FIXME make sure client is connected
+        if (lastFitSessionId.isEmpty() && googleFitAPIHelper.isConnected()) {
             PendingResult<Status> pendingResult = Fitness.SessionsApi.startSession(googleFitAPIHelper.getClient(), beginSession);
             pendingResult.setResultCallback(new ResultCallback<Status>() {
                 @Override
@@ -257,9 +247,11 @@ public class GcmIntentService extends IntentService {
                     }
                 }
             });
-        } else {
+        } else if (!lastFitSessionId.isEmpty()) {
             Log.i(LogConstants.LOG_ID, "A session ( " + lastFitSessionId + ")already existed, end it, and create a new one");
             endSessionAndCreateNewOne(lastFitSessionId); // Watchtout, can go in inifinite recursion
+        } else if (!googleFitAPIHelper.isConnected()) {
+            Log.w(LogConstants.LOG_ID, "Unable to start session b/c client is not connected!");
         }
 
 
@@ -292,7 +284,7 @@ public class GcmIntentService extends IntentService {
                         .setOngoing(true)
                         .setContentText(msg);
 
-        PendingIntent endWorkoutPendingIntent = PendingIntent.getService(this, 0, new Intent(this, GcmIntentService.class), 0);
+        PendingIntent endWorkoutPendingIntent = PendingIntent.getService(this, 0, new Intent(this, GcmIntentService.class), PendingIntent.FLAG_CANCEL_CURRENT);
         mBuilder.setContentIntent(endWorkoutPendingIntent);
         mNotificationManager.notify(NOTIFICATION_SESSION_ID, mBuilder.build());
     }
@@ -311,8 +303,6 @@ public class GcmIntentService extends IntentService {
             } else if (typeOfWork == StandAppMessages.BREAK_END) {
                 endWorkout();
             }
-
-            releaseWakeLock();
         }
 
         @Override
@@ -324,7 +314,6 @@ public class GcmIntentService extends IntentService {
             } else if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_SERVICE_DISCONNECTED) {
                 Log.i(LogConstants.LOG_ID, "Connection lost.  Reason: Service Disconnected");
             }
-            releaseWakeLock();
         }
     };
 
@@ -334,23 +323,9 @@ public class GcmIntentService extends IntentService {
         public void onConnectionFailed(ConnectionResult result) {
             Log.i(LogConstants.LOG_ID, "Connection failed. Cause: " + result.toString());
             sendNotificationOAuthResolution();
-            releaseWakeLock();
             return;
         }
     };
-
-    private void sendNotification(String msg) {
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.common_ic_googleplayservices)
-                        .setContentTitle("GCM Notification")
-                        .setStyle(new NotificationCompat.BigTextStyle()
-                                .bigText(msg))
-                        .setContentText(msg);
-
-        mBuilder.setContentIntent(mainActivityContentIntent);
-        mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
-    }
 
     private void sendNotificationOAuthResolution() {
         String msg = getResources().getString(R.string.notif_oauth_msg);
@@ -368,9 +343,14 @@ public class GcmIntentService extends IntentService {
 
 
     private void subscribeToSteps() {
-        subscribe(DataType.TYPE_STEP_COUNT_DELTA);
-        subscribe(DataType.TYPE_STEP_COUNT_CADENCE);
-        subscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
+        // TODO JS Confirm that this is messing up the counting of steps for the original app.
+        // This is disabled b/c it seems to intefere with the step counter in the original.
+        if (SUBSCRIBE_TO_STEPS) {
+            subscribe(DataType.TYPE_STEP_COUNT_DELTA);
+            subscribe(DataType.TYPE_STEP_COUNT_CADENCE);
+            subscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
+        }
+
     }
 
     private void subscribe(DataType dataType) {
