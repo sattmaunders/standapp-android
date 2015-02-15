@@ -132,7 +132,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle(null);
-        getSupportActionBar().setLogo(R.drawable.sa_ic_applauncher);
+        getSupportActionBar().setLogo(R.drawable.sa_ic_actionbaricon);
     }
 
     @Override

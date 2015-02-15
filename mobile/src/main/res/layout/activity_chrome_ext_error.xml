@@ -12,7 +12,7 @@
     <ImageView
         android:layout_width="wrap_content"
         android:id="@+id/iv_logo"
-        android:src="@drawable/sa_ic_applauncher"
+        android:src="@drawable/sa_ic_actionbaricon"
         android:layout_height="wrap_content"
         android:scaleType="center"
         android:layout_alignParentTop="true"
