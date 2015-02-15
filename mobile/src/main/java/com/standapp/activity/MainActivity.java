@@ -126,6 +126,9 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
         }
         googleFitAPIHelper.buildFitnessClient(connectionCallbacks, onConnectionFailedListener);
+        // Connect to the Fitness API
+        Log.i(LogConstants.LOG_ID, "MainActivity:onStart Connecting fitness api...");
+        googleFitAPIHelper.connect();
     }
 
     private void initToolbar() {
@@ -164,7 +167,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
                 googleFitAPIHelper.revokeFitPermissions(MainActivity.this, MainActivity.this);
             }
         });
-        builder.setNegativeButton(getString(R.string.no), new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 dialog.dismiss();
             }
@@ -241,9 +244,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     protected void onStart() {
         super.onStart();
-        // Connect to the Fitness API
-        Log.i(LogConstants.LOG_ID, "MainActivity:onStart Connecting fitness api...");
-        googleFitAPIHelper.connect();
     }
 
     @Override
