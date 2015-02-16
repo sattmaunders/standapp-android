@@ -36,4 +36,7 @@
     <string name="cancel">Cancel</string>
     <string name="action_go_to_site">Get Chrome Extension</string>
 
+    <string name="toast_unsubscribed_succes">Stopped tracking steps and location</string>
+    <string name="toast_subscribed_succes">Started tracking steps and location</string>
+
 </resources>

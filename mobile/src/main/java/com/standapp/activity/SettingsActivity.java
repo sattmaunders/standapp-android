@@ -32,6 +32,7 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
     public static final String pref_key_disconnect_fit = "pref_key_disconnect_fit";
 
 
+    // MAKE ENUMS TODO
     private static final int REVOKE_GOOGLE_FIT_PERMISSIONS = 0;
     private static final int UNSUBSCRIBE_STEP_DATA = 1;
     private static final int SUBSCRIBE_STEP_DATA = 2;
@@ -39,10 +40,14 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
     private static final int TRACK_SESSION_OFF = 4;
 
     private int typeOfWork = -1;
-
-
     private Preference prefDisconnectFit = null;
 
+
+    // Track how many async calls were successful, i.e for async subscribing
+    private int numAsyncSuccessfullCallbacks = 0;
+
+
+    private static final DataType[] SUBSCRIBED_DATA_TYPES = new DataType[] {DataType.TYPE_STEP_COUNT_CUMULATIVE, DataType.TYPE_STEP_COUNT_DELTA, DataType.TYPE_LOCATION_SAMPLE};
 
     @Inject
     GoogleFitAPIHelper googleFitAPIHelper;
@@ -90,13 +95,12 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
 
     private void setClickListeners() {
         prefDisconnectFit = (Preference) findPreference(pref_key_disconnect_fit);
-
         prefDisconnectFit.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 
             @Override
             public boolean onPreferenceClick(Preference preference) {
 
-                if (googleFitAPIHelper.isConnected()){
+                if (googleFitAPIHelper.isConnected()) {
                     revokeGoogleFitPermissions();
                 } else {
                     setTypeOfWork(REVOKE_GOOGLE_FIT_PERMISSIONS);
@@ -174,15 +178,15 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
 
             boolean subscribeSteps = sharedPreferences.getBoolean(key, false);
 
-            if (subscribeSteps){
-                if (googleFitAPIHelper.isConnected()){
+            if (subscribeSteps) {
+                if (googleFitAPIHelper.isConnected()) {
                     subscribeToStepsAndLocation();
                 } else {
                     setTypeOfWork(SUBSCRIBE_STEP_DATA);
                     googleFitAPIHelper.connect();
                 }
             } else {
-                if (googleFitAPIHelper.isConnected()){
+                if (googleFitAPIHelper.isConnected()) {
                     unsubscribeToStepsAndLocation();
                 } else {
                     setTypeOfWork(UNSUBSCRIBE_STEP_DATA);
@@ -192,17 +196,18 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
         }
     }
 
-    // We're connected by now
     private void subscribeToStepsAndLocation() {
-        subscribe(DataType.TYPE_STEP_COUNT_DELTA);
-        subscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
-        subscribe(DataType.TYPE_LOCATION_SAMPLE);
+        numAsyncSuccessfullCallbacks = 0;
+        for (DataType dataType : SUBSCRIBED_DATA_TYPES){
+            subscribe(dataType);
+        }
     }
 
     private void unsubscribeToStepsAndLocation() {
-        unsubscribe(DataType.TYPE_STEP_COUNT_DELTA);
-        unsubscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
-        unsubscribe(DataType.TYPE_LOCATION_SAMPLE);
+        numAsyncSuccessfullCallbacks = 0;
+        for (DataType dataType : SUBSCRIBED_DATA_TYPES){
+            unsubscribe(dataType);
+        }
     }
 
     private void unsubscribe(final DataType dataType) {
@@ -212,20 +217,24 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
             public void onResult(Status status) {
                 String msg = "";
                 if (status.isSuccess()) {
-                   msg = "Successfully unsubscribed for data type: " + dataType.getName();
+                    msg = "Successfully unsubscribed for data type: " + dataType.getName();
+                    numAsyncSuccessfullCallbacks++;
                 } else {
                     msg = "Failed to unsubscribe for data type: " + dataType.getName();
                 }
-
-                toast(msg);
+                Log.i(LogConstants.LOG_ID, msg);
+                if (numAsyncSuccessfullCallbacks == SUBSCRIBED_DATA_TYPES.length) {
+                    Toast.makeText(SettingsActivity.this, SettingsActivity.this.getString(R.string.toast_unsubscribed_succes), Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
 
-    private void toast(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-        Log.i(LogConstants.LOG_ID, msg);
-    }
+//    private void toast(String msg) {
+//        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+//        Log.i(LogConstants.LOG_ID, msg);
+//    }
+
 
     private void subscribe(final DataType dataType) {
         PendingResult<Status> res = googleFitAPIHelper.subscribe(dataType);
@@ -234,6 +243,7 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
             public void onResult(Status status) {
                 String msg = "";
                 if (status.isSuccess()) {
+                    numAsyncSuccessfullCallbacks++;
                     if (status.getStatusCode() == FitnessStatusCodes.SUCCESS_ALREADY_SUBSCRIBED) {
                         msg = "Already sub to " + dataType.getName();
                     } else {
@@ -242,7 +252,10 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
                 } else {
                     msg = "There was a problem subscribing." + dataType.getName();
                 }
-                toast(msg);
+                Log.i(LogConstants.LOG_ID, msg);
+                if (numAsyncSuccessfullCallbacks == SUBSCRIBED_DATA_TYPES.length) {
+                    Toast.makeText(SettingsActivity.this, SettingsActivity.this.getString(R.string.toast_subscribed_succes), Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -265,123 +278,5 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
     public void onRevokedFitPermissions() {
         refreshPrefDisconnectFitSummary();
     }
-
-//
-//    @Override
-//    protected void onPostCreate(Bundle savedInstanceState) {
-//        super.onPostCreate(savedInstanceState);
-//
-//        setupSimplePreferencesScreen();
-//    }
-//
-//    /**
-//     * Shows the simplified settings UI if the device configuration if the
-//     * device configuration dictates that a simplified, single-pane UI should be
-//     * shown.
-//     */
-//    private void setupSimplePreferencesScreen() {
-//
-//        // In the simplified UI, fragments are not used at all and we instead
-//        // use the older PreferenceActivity APIs.
-//
-//        // Add 'general' preferences.
-//        addPreferencesFromResource(R.xml.pref_general);
-//
-//        // Add 'notifications' preferences, and a corresponding header.
-//        PreferenceCategory fakeHeader = new PreferenceCategory(this);
-//        fakeHeader.setTitle(R.string.pref_header_notifications);
-//        getPreferenceScreen().addPreference(fakeHeader);
-//        addPreferencesFromResource(R.xml.pref_notification);
-//
-//        // Add 'data and sync' preferences, and a corresponding header.
-//        fakeHeader = new PreferenceCategory(this);
-//        fakeHeader.setTitle(R.string.pref_header_data_sync);
-//        getPreferenceScreen().addPreference(fakeHeader);
-//        addPreferencesFromResource(R.xml.pref_data_sync);
-//
-//        // Bind the summaries of EditText/List/Dialog/Ringtone preferences to
-//        // their values. When their values change, their summaries are updated
-//        // to reflect the new value, per the Android Design guidelines.
-//        bindPreferenceSummaryToValue(findPreference("example_text"));
-//        bindPreferenceSummaryToValue(findPreference("example_list"));
-//        bindPreferenceSummaryToValue(findPreference("notifications_new_message_ringtone"));
-//        bindPreferenceSummaryToValue(findPreference("sync_frequency"));
-//    }
-//
-//
-//
-//
-//    /**
-//     * A preference value change listener that updates the preference's summary
-//     * to reflect its new value.
-//     */
-//    private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
-//        @Override
-//        public boolean onPreferenceChange(Preference preference, Object value) {
-//            String stringValue = value.toString();
-//
-//            if (preference instanceof ListPreference) {
-//                // For list preferences, look up the correct display value in
-//                // the preference's 'entries' list.
-//                ListPreference listPreference = (ListPreference) preference;
-//                int index = listPreference.findIndexOfValue(stringValue);
-//
-//                // Set the summary to reflect the new value.
-//                preference.setSummary(
-//                        index >= 0
-//                                ? listPreference.getEntries()[index]
-//                                : null);
-//
-//            } else if (preference instanceof RingtonePreference) {
-//                // For ringtone preferences, look up the correct display value
-//                // using RingtoneManager.
-//                if (TextUtils.isEmpty(stringValue)) {
-//                    // Empty values correspond to 'silent' (no ringtone).
-//                    preference.setSummary(R.string.pref_ringtone_silent);
-//
-//                } else {
-//                    Ringtone ringtone = RingtoneManager.getRingtone(
-//                            preference.getContext(), Uri.parse(stringValue));
-//
-//                    if (ringtone == null) {
-//                        // Clear the summary if there was a lookup error.
-//                        preference.setSummary(null);
-//                    } else {
-//                        // Set the summary to reflect the new ringtone display
-//                        // name.
-//                        String name = ringtone.getTitle(preference.getContext());
-//                        preference.setSummary(name);
-//                    }
-//                }
-//
-//            } else {
-//                // For all other preferences, set the summary to the value's
-//                // simple string representation.
-//                preference.setSummary(stringValue);
-//            }
-//            return true;
-//        }
-//    };
-//
-//    /**
-//     * Binds a preference's summary to its value. More specifically, when the
-//     * preference's value is changed, its summary (line of text below the
-//     * preference title) is updated to reflect the value. The summary is also
-//     * immediately updated upon calling this method. The exact display format is
-//     * dependent on the type of preference.
-//     *
-//     * @see #sBindPreferenceSummaryToValueListener
-//     */
-//    private static void bindPreferenceSummaryToValue(Preference preference) {
-//        // Set the listener to watch for value changes.
-//        preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
-//
-//        // Trigger the listener immediately with the preference's
-//        // current value.
-//        sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-//                PreferenceManager
-//                        .getDefaultSharedPreferences(preference.getContext())
-//                        .getString(preference.getKey(), ""));
-//    }
 
 }

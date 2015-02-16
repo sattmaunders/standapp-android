@@ -92,4 +92,8 @@ public class PreferenceAccess {
         return editor.commit();
 
     }
+
+    public boolean getStepRecording() {
+        return getSharedPreferences().getBoolean(SettingsActivity.pref_key_step_recording, false);
+    }
 }
