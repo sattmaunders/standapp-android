@@ -1,0 +1,5 @@
+- Toggle step and location detection in settings
+- Toggle tracking of walk sessions in settings
+- View active Google Fit subscriptions in settings
+- Moved disconnect from Google fit to settings
+- Add link to Chrome Extension
