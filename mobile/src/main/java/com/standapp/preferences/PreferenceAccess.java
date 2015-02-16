@@ -2,9 +2,10 @@ package com.standapp.preferences;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.standapp.activity.MainActivity;
+import com.standapp.activity.SettingsActivity;
 import com.standapp.logger.LogConstants;
 import com.standapp.util.AppInfo;
 
@@ -31,10 +32,7 @@ public class PreferenceAccess {
      * @return Application's {@code SharedPreferences}.
      */
     private SharedPreferences getSharedPreferences() {
-        // This sample app persists the registration ID in shared preferences, but
-        // how you store the regID in your app is up to you.
-        return context.getSharedPreferences(MainActivity.class.getSimpleName(),
-                Context.MODE_PRIVATE);
+        return PreferenceManager.getDefaultSharedPreferences(context);
     }
 
     public int getAppVersion(){
@@ -86,5 +84,12 @@ public class PreferenceAccess {
         int appVersion = AppInfo.getAppVersion(context);
         Log.i(LogConstants.LOG_ID, "Clearing regId on app version " + appVersion);
         return this.updateGCMRegistrationId(appVersion, "");
+    }
+
+    public boolean updateStepRecording(boolean b) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putBoolean(SettingsActivity.pref_key_step_recording, b);
+        return editor.commit();
+
     }
 }

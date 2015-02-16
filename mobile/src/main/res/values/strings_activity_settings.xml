@@ -1,10 +1,14 @@
 <resources>
     <string name="pref_title_google_fit">Google Fit</string>
-    <string name="pref_summary_disconnect_fit">You are logged in as %1$s</string>
+
     <string name="pref_title_disconnect_fit">Disconnect from Google Fit</string>
-    <string name="pref_title_step_recording">Track steps</string>
-    <string name="pref_summary_step_recording">Allow Standroid to record your steps to Google Fit (low battery consumption). Others apps, such as Google Fit, may already record your steps.</string>
-    <string name="pref_title_session_recording">Track walking activity</string>
-    <string name="pref_summary_session_recording">When you take a workout break using the Chrome Extension, your walking session is recorded.</string>
+
+    <string name="pref_title_step_recording">Step detection</string>
+    <string name="pref_summary_step_recording">Allow Google Fit to collect and store steps, including location data.</string>
+
+    <string name="pref_title_session_recording">Track walk sessions</string>
+    <string name="pref_summary_session_recording">Allow Google fit to record walking sessions, when you take a workout using the Standroid Chrome Extension.</string>
+
+    <string name="pref_summary_disconnect_fit">You are logged in as %1$s</string>
     <string name="pref_summary_disconnect_fit_no_user">You are not logged in. Restart the app to login as a different user.</string>
 </resources>

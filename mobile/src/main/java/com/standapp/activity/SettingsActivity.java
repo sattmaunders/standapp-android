@@ -10,6 +10,11 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.fitness.FitnessStatusCodes;
+import com.google.android.gms.fitness.data.DataType;
 import com.standapp.R;
 import com.standapp.activity.common.StandAppBasePreferenceActivity;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
@@ -114,9 +119,9 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
             if (typeOfWork == REVOKE_GOOGLE_FIT_PERMISSIONS) {
                 revokeGoogleFitPermissions();
             } else if (typeOfWork == SUBSCRIBE_STEP_DATA) {
-
+                subscribeToStepsAndLocation();
             } else if (typeOfWork == UNSUBSCRIBE_STEP_DATA) {
-
+                unsubscribeToStepsAndLocation();
             } else if (typeOfWork == TRACK_SESSION_ON) {
 
             } else if (typeOfWork == TRACK_SESSION_OFF) {
@@ -165,9 +170,81 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.equals(pref_key_session_recording)) {
-            Toast.makeText(this, "pref_key_session_recording", Toast.LENGTH_LONG).show();
+        if (key.equals(pref_key_step_recording)) {
+
+            boolean subscribeSteps = sharedPreferences.getBoolean(key, false);
+
+            if (subscribeSteps){
+                if (googleFitAPIHelper.isConnected()){
+                    subscribeToStepsAndLocation();
+                } else {
+                    setTypeOfWork(SUBSCRIBE_STEP_DATA);
+                    googleFitAPIHelper.connect();
+                }
+            } else {
+                if (googleFitAPIHelper.isConnected()){
+                    unsubscribeToStepsAndLocation();
+                } else {
+                    setTypeOfWork(UNSUBSCRIBE_STEP_DATA);
+                    googleFitAPIHelper.connect();
+                }
+            }
         }
+    }
+
+    // We're connected by now
+    private void subscribeToStepsAndLocation() {
+        subscribe(DataType.TYPE_STEP_COUNT_DELTA);
+        subscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
+        subscribe(DataType.TYPE_LOCATION_SAMPLE);
+    }
+
+    private void unsubscribeToStepsAndLocation() {
+        unsubscribe(DataType.TYPE_STEP_COUNT_DELTA);
+        unsubscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
+        unsubscribe(DataType.TYPE_LOCATION_SAMPLE);
+    }
+
+    private void unsubscribe(final DataType dataType) {
+        PendingResult<Status> unsubscribe = googleFitAPIHelper.unsubscribe(dataType);
+        unsubscribe.setResultCallback(new ResultCallback<Status>() {
+            @Override
+            public void onResult(Status status) {
+                String msg = "";
+                if (status.isSuccess()) {
+                   msg = "Successfully unsubscribed for data type: " + dataType.getName();
+                } else {
+                    msg = "Failed to unsubscribe for data type: " + dataType.getName();
+                }
+
+                toast(msg);
+            }
+        });
+    }
+
+    private void toast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+        Log.i(LogConstants.LOG_ID, msg);
+    }
+
+    private void subscribe(final DataType dataType) {
+        PendingResult<Status> res = googleFitAPIHelper.subscribe(dataType);
+        res.setResultCallback(new ResultCallback<Status>() {
+            @Override
+            public void onResult(Status status) {
+                String msg = "";
+                if (status.isSuccess()) {
+                    if (status.getStatusCode() == FitnessStatusCodes.SUCCESS_ALREADY_SUBSCRIBED) {
+                        msg = "Already sub to " + dataType.getName();
+                    } else {
+                        msg = "Successfully subscribed! " + dataType.getName();
+                    }
+                } else {
+                    msg = "There was a problem subscribing." + dataType.getName();
+                }
+                toast(msg);
+            }
+        });
     }
 
     @Override
