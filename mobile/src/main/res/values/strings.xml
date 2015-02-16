@@ -17,8 +17,8 @@
 
     <string name="notif_oauth_title">Problem connecting to Google Fit</string>
     <string name="notif_oauth_msg">Tap here to authenticate with Google Fit</string>
-    <string name="notif_in_session_msg">Tap to end your break or return to your desk.</string>
-    <string name="notif_in_session_title">Break in session</string>
+    <string name="notif_in_session_msg">Tap to end your workout or return to your desk.</string>
+    <string name="notif_in_session_title">Workout in session</string>
     <string name="action_unregister_googlefitapi">Disconnect from Google Fit</string>
     <string name="toast_googlefit_disconnect_success">Disconnected from Google Fit</string>
     <string name="toast_googlefit_disconnect_failed">Unable to disconnect app from Google Fit.</string>

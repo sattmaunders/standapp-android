@@ -19,8 +19,6 @@ import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.FitnessActivities;
-import com.google.android.gms.fitness.FitnessStatusCodes;
-import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Session;
 import com.google.android.gms.fitness.result.SessionStopResult;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
@@ -60,8 +58,6 @@ public class GcmIntentService extends IntentService {
     private PendingIntent mainActivityContentIntent;
     private StandAppMessages typeOfWork = null;
 
-    private static final boolean SUBSCRIBE_TO_STEPS = false;
-    private static final boolean UNSUBSCRIBE_TO_STEPS = false;
     private Intent intent;
 
 
@@ -100,9 +96,9 @@ public class GcmIntentService extends IntentService {
                 } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
                 } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType) && !messageOriginatedFromPhone(extras)) {
                     Log.i(LogConstants.LOG_ID, "Received: " + extras.toString());
-                    if (extras.getString(BackendServer.GCM_FIELD_MESSAGE_KEY).equalsIgnoreCase(StandAppMessages.BREAK_START.toString())) {
+                    if (isBreakStarting(extras) && sessionRecordingEnabled()) {
                         initFitnessClientAndConnect(StandAppMessages.BREAK_START);
-                    } else if (extras.getString(BackendServer.GCM_FIELD_MESSAGE_KEY).equalsIgnoreCase(StandAppMessages.BREAK_END.toString())) {
+                    } else if (isBreakEnding(extras)) {
                         initFitnessClientAndConnect(StandAppMessages.BREAK_END);
                     }
                 } else if (messageOriginatedFromPhone(extras)) {
@@ -116,6 +112,18 @@ public class GcmIntentService extends IntentService {
             Log.i(LogConstants.LOG_ID, "Never set a type of work, so just releasing the lock");
             releaseWakeLock();
         }
+    }
+
+    private boolean sessionRecordingEnabled() {
+        return preferenceAccess.getSessionRecording();
+    }
+
+    private boolean isBreakEnding(Bundle extras) {
+        return extras.getString(BackendServer.GCM_FIELD_MESSAGE_KEY).equalsIgnoreCase(StandAppMessages.BREAK_END.toString());
+    }
+
+    private boolean isBreakStarting(Bundle extras) {
+        return extras.getString(BackendServer.GCM_FIELD_MESSAGE_KEY).equalsIgnoreCase(StandAppMessages.BREAK_START.toString());
     }
 
     private void disconnectGoogleFitAndReleaseWakeLock() {
@@ -158,23 +166,13 @@ public class GcmIntentService extends IntentService {
     }
 
     private void startWorkout() {
-        subscribeToSteps();
         createSession();
         createRecordingNotification();
     }
 
     private void endWorkout() {
         endSession();
-        unsubscribeFromSteps(); // TODO confirm unsubscribing destroys data
         clearRecordingNotification();
-    }
-
-    private void unsubscribeFromSteps() {
-        if (UNSUBSCRIBE_TO_STEPS) {
-            unsubscribe(DataType.TYPE_STEP_COUNT_DELTA);
-            unsubscribe(DataType.TYPE_STEP_COUNT_CADENCE);
-            unsubscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
-        }
     }
 
     private void endSessionAndCreateNewOne(String oldSessionId) {
@@ -245,8 +243,6 @@ public class GcmIntentService extends IntentService {
         String lastFitSessionId = preferenceAccess.getLastFitSessionId();
         Log.i(LogConstants.LOG_ID, "When creating session, the last session id: " + lastFitSessionId);
 
-
-        // FIXME make sure client is connected
         if (lastFitSessionId.isEmpty() && googleFitAPIHelper.isConnected()) {
             PendingResult<Status> pendingResult = googleFitAPIHelper.startSession(beginSession);
             pendingResult.setResultCallback(new ResultCallback<Status>() {
@@ -360,57 +356,6 @@ public class GcmIntentService extends IntentService {
 
         mBuilder.setContentIntent(mainActivityContentIntent);
         mNotificationManager.notify(NOTIFICATION_OAUTH_RES_ID, mBuilder.build());
-    }
-
-
-    private void subscribeToSteps() {
-        // TODO JS Confirm that this is messing up the counting of steps for the original app.
-        // This is disabled b/c it seems to intefere with the step counter in the original.
-        if (SUBSCRIBE_TO_STEPS) {
-            subscribe(DataType.TYPE_STEP_COUNT_DELTA);
-            subscribe(DataType.TYPE_STEP_COUNT_CADENCE);
-            subscribe(DataType.TYPE_STEP_COUNT_CUMULATIVE);
-        }
-
-    }
-
-    private void subscribe(DataType dataType) {
-        PendingResult<Status> statusPendingResult = googleFitAPIHelper.subscribe(dataType);
-        statusPendingResult.setResultCallback(new ResultCallback<Status>() {
-            @Override
-            public void onResult(Status status) {
-                if (status.isSuccess()) {
-                    if (status.getStatusCode()
-                            == FitnessStatusCodes.SUCCESS_ALREADY_SUBSCRIBED) {
-                        Log.i(LogConstants.LOG_ID, "Existing subscription for activity detected.");
-                    } else {
-                        Log.i(LogConstants.LOG_ID, "Successfully subscribed!");
-                    }
-                } else {
-                    Log.i(LogConstants.LOG_ID, "There was a problem subscribing.");
-                }
-            }
-        });
-    }
-
-    private void unsubscribe(final DataType dataType) {
-        if (googleFitAPIHelper.isConnected()) {
-            PendingResult<Status> unsubscribe = googleFitAPIHelper.unsubscribe(dataType);
-            unsubscribe.setResultCallback(new ResultCallback<Status>() {
-                @Override
-                public void onResult(Status status) {
-                    if (status.isSuccess()) {
-                        Log.i(LogConstants.LOG_ID, "Successfully unsubscribed for data type: " + dataType.getName());
-                    } else {
-                        // Subscription not removed
-                        Log.i(LogConstants.LOG_ID, "Failed to unsubscribe for data type: " + dataType.getName());
-                    }
-                }
-            });
-        } else {
-            Log.i(LogConstants.LOG_ID, "Fit client not connected, unable to unsubscribe");
-        }
-
     }
 
     public void setTypeOfWork(StandAppMessages typeOfWork) {
