@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;
+import android.text.Html;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -15,6 +16,8 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.FitnessStatusCodes;
 import com.google.android.gms.fitness.data.DataType;
+import com.google.android.gms.fitness.data.Subscription;
+import com.google.android.gms.fitness.result.ListSubscriptionsResult;
 import com.standapp.R;
 import com.standapp.activity.common.StandAppBasePreferenceActivity;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
@@ -30,6 +33,7 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
     public static final String pref_key_step_recording = "pref_key_step_recording";
     public static final String pref_key_session_recording = "pref_key_session_recording";
     public static final String pref_key_disconnect_fit = "pref_key_disconnect_fit";
+    public static final String pref_key_active_subscriptions = "pref_key_active_subscriptions";
 
 
     // MAKE ENUMS TODO
@@ -38,9 +42,9 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
     private static final int SUBSCRIBE_STEP_DATA = 2;
     private static final int TRACK_SESSION_ON = 3;
     private static final int TRACK_SESSION_OFF = 4;
+    private static final int VIEW_ACTIVE_SUBSCRIPTIONS = 5;
 
     private int typeOfWork = -1;
-    private Preference prefDisconnectFit = null;
 
 
     // Track how many async calls were successful, i.e for async subscribing
@@ -55,14 +59,18 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
     @Inject
     PreferenceAccess preferenceAccess;
 
+    private Preference prefViewActiveSubscriptions;
+    private Preference prefDisconnectFit = null;
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.pref_general);
 
-        setClickListeners();
-
         prefDisconnectFit = (Preference) findPreference(pref_key_disconnect_fit);
+        prefViewActiveSubscriptions = (Preference) findPreference(pref_key_active_subscriptions);
+        setClickListeners();
 
         googleFitAPIHelper.buildFitnessClient(connectionCallbacks, onConnectionFailedListener);
         refreshPrefDisconnectFitSummary();
@@ -94,7 +102,6 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
     }
 
     private void setClickListeners() {
-        prefDisconnectFit = (Preference) findPreference(pref_key_disconnect_fit);
         prefDisconnectFit.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 
             @Override
@@ -107,6 +114,66 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
                     googleFitAPIHelper.connect();
                 }
                 return true;
+            }
+        });
+
+        prefViewActiveSubscriptions.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+
+                if (googleFitAPIHelper.isConnected()) {
+                    viewActiveSubscriptions();
+                } else {
+                    setTypeOfWork(VIEW_ACTIVE_SUBSCRIPTIONS);
+                    googleFitAPIHelper.connect();
+                }
+                return true;
+            }
+
+        });
+    }
+
+
+    private void viewActiveSubscriptions() {
+        PendingResult<ListSubscriptionsResult> res = googleFitAPIHelper.listActiveSubscriptions();
+        res.setResultCallback(new ResultCallback<ListSubscriptionsResult>() {
+            @Override
+            public void onResult(ListSubscriptionsResult listSubscriptionsResult) {
+                String res = "";
+                for (Subscription sc : listSubscriptionsResult.getSubscriptions()) {
+                    DataType dt = sc.getDataType();
+                    if (dt.equals(DataType.TYPE_STEP_COUNT_CUMULATIVE)) {
+                        res += SettingsActivity.this.getString(R.string.data_type_display_step_count_cumulative) + "<br>";
+                    } else if (dt.equals(DataType.TYPE_STEP_COUNT_DELTA)) {
+                        res += SettingsActivity.this.getString(R.string.data_type_display_step_count_delta) + "<br>";
+                    } else if (dt.equals(DataType.TYPE_LOCATION_SAMPLE)) {
+                        res += SettingsActivity.this.getString(R.string.data_type_display_location_sample) + "<br>";
+                    } else {
+                        res += dt.getName() + "<br>";
+                    }
+                }
+
+
+                if (res.isEmpty()){
+                    res = SettingsActivity.this.getString(R.string.no_active_subs);
+                } else {
+                    // Add disclaimer
+                    res += "<br>";
+                    res += "<small>" + SettingsActivity.this.getString(R.string.dialog_active_subs_disclaimer) + "</small>";
+                }
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(SettingsActivity.this);
+                builder.setTitle(R.string.dialog_title_active_subscriptions);
+                builder.setMessage(Html.fromHtml(res));
+                builder.setNeutralButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                    }
+                });
+
+                AlertDialog alert = builder.create();
+                alert.show();
             }
         });
     }
@@ -126,10 +193,8 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
                 subscribeToStepsAndLocation();
             } else if (typeOfWork == UNSUBSCRIBE_STEP_DATA) {
                 unsubscribeToStepsAndLocation();
-            } else if (typeOfWork == TRACK_SESSION_ON) {
-
-            } else if (typeOfWork == TRACK_SESSION_OFF) {
-
+            } else if (typeOfWork == VIEW_ACTIVE_SUBSCRIPTIONS) {
+                viewActiveSubscriptions();
             }
         }
 

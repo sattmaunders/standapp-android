@@ -14,6 +14,7 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.fitness.data.DataType;
 import com.google.android.gms.fitness.data.Session;
+import com.google.android.gms.fitness.result.ListSubscriptionsResult;
 import com.google.android.gms.fitness.result.SessionStopResult;
 import com.standapp.R;
 import com.standapp.logger.LogConstants;
@@ -145,5 +146,13 @@ public class GoogleFitAPIHelper {
     public void blockConnect() {
         Log.i(TAG, "block connect");
         mClient.blockingConnect(1, TimeUnit.MINUTES);
+    }
+
+    public PendingResult<ListSubscriptionsResult> listActiveSubscriptions(DataType dataType) {
+        return Fitness.RecordingApi.listSubscriptions(mClient, dataType);
+    }
+
+    public PendingResult<ListSubscriptionsResult> listActiveSubscriptions() {
+        return Fitness.RecordingApi.listSubscriptions(mClient);
     }
 }

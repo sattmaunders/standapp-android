@@ -10,6 +10,11 @@
             android:defaultValue="false"
             android:summary="@string/pref_summary_step_recording"/>
 
+        <Preference
+            android:key="pref_key_active_subscriptions"
+            android:summary="@string/pref_summary_active_subscriptions"
+            android:title="@string/pref_title_active_subscriptions" />
+
         <SwitchPreference
             android:key="pref_key_session_recording"
             android:title="@string/pref_title_session_recording"

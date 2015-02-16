@@ -39,4 +39,12 @@
     <string name="toast_unsubscribed_succes">Stopped tracking steps and location</string>
     <string name="toast_subscribed_succes">Started tracking steps and location</string>
 
+    <string name="no_active_subs">You have no active subscriptions. If another app such as Google Fit is not recording your steps to Google Fit, it\'s recommended to enable Step Detection.</string>
+    <string name="data_type_display_location_sample">Location</string>
+    <string name="data_type_display_step_count_delta">Delta Step Count</string>
+    <string name="data_type_display_step_count_cumulative">Cumulative Step Count</string>
+    <string name="dialog_title_active_subscriptions">Active Subscriptions</string>
+    <string name="ok">OK</string>
+    <string name="dialog_active_subs_disclaimer">You may remove this data at anytime time using the Google Fit app.</string>
+
 </resources>
