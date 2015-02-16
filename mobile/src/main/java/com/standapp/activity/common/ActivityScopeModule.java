@@ -10,6 +10,7 @@ import android.content.Context;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 import com.standapp.activity.MainActivity;
+import com.standapp.activity.SettingsActivity;
 import com.standapp.activity.error.ChromeExtErrorActivity;
 import com.standapp.activity.error.GenericErrorActivity;
 import com.standapp.app.StandAppScopeModule;
@@ -44,6 +45,7 @@ import dagger.Provides;
                 SuperAwesomeCardFragment.class,
                 GraphingCardFragment.class,
                 ChromeExtErrorActivity.class,
+                SettingsActivity.class,
                 GenericErrorActivity.class
         }
 )

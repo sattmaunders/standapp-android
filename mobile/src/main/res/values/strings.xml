@@ -7,8 +7,9 @@
     <string name="chrome_ext_error_link">http://goo.gl/b5NwZB</string>
     <string name="action_settings">Settings</string>
     <string name="action_unregister_listener">Unregister listener</string>
-    <string name="title_activity_chrome_ext_error">ChromeExtErrorActivity</string>
-    <string name="title_activity_generic_error">GenericErrorActivity</string>
+    <string name="title_activity_chrome_ext_error">Download Chrome Extension</string>
+    <string name="title_activity_generic_error">Error</string>
+    <string name="title_activity_settings">Settings</string>
     <string name="generic_error">Unable to connect to server</string>
     <string name="btn_try_again">Tap to try again</string>
     <string name="already_have_ext">Try again</string>

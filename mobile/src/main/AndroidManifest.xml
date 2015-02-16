@@ -49,6 +49,10 @@
             android:name=".activity.error.GenericErrorActivity"
             android:label="@string/title_activity_generic_error" >
         </activity>
+        <activity
+            android:name=".activity.SettingsActivity"
+            android:label="@string/title_activity_settings" >
+        </activity>
     </application>
 
 </manifest>

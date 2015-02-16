@@ -1,8 +1,6 @@
 package com.standapp.activity;
 
 import android.accounts.AccountManager;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.net.Uri;
@@ -33,7 +31,6 @@ import com.standapp.google.GooglePlayServicesHelper;
 import com.standapp.google.gcm.GCMHelper;
 import com.standapp.google.gcm.GCMHelperListener;
 import com.standapp.google.googlefitapi.GoogleFitAPIHelper;
-import com.standapp.google.googlefitapi.RevokeGoogleFitPermissionsListener;
 import com.standapp.logger.LogConstants;
 import com.standapp.preferences.PreferenceAccess;
 import com.standapp.util.User;
@@ -64,7 +61,7 @@ import butterknife.InjectView;
              * onRegisterSuccess/onAlreadyRegistered (*success*)
  *
  */
-public class MainActivity extends StandAppBaseActionBarActivity implements GCMHelperListener, UserInfoListener, OnFragmentCreatedListener, RevokeGoogleFitPermissionsListener {
+public class MainActivity extends StandAppBaseActionBarActivity implements GCMHelperListener, UserInfoListener, OnFragmentCreatedListener {
 
     // [START auth_variable_references]
     private static final int REQUEST_OAUTH = 1;
@@ -154,11 +151,17 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             return goToWebsite();
         }
 
-        if (id == R.id.action_unregister_googlefitapi) {
-            return revokeGoogleFitPermissions();
+        if (id == R.id.action_settings) {
+            return goToSettings();
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private boolean goToSettings() {
+        Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+        startActivity(intent);
+        return true;
     }
 
     private boolean goToWebsite() {
@@ -168,27 +171,6 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         return true;
     }
 
-
-    private boolean revokeGoogleFitPermissions() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(R.string.confirm_google_fit_revoke_permissions_title);
-        builder.setMessage(getString(R.string.confirm_google_fit_revoke_permissions));
-        builder.setIcon(R.drawable.sa_ic_fit);
-        builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.dismiss();
-                googleFitAPIHelper.revokeFitPermissions(MainActivity.this, MainActivity.this);
-            }
-        });
-        builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.dismiss();
-            }
-        });
-        AlertDialog alert = builder.create();
-        alert.show();
-        return true;
-    }
 
     private GoogleApiClient.ConnectionCallbacks connectionCallbacks = new GoogleApiClient.ConnectionCallbacks() {
 
@@ -390,9 +372,4 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         }
     }
 
-    @Override
-    public void onRevokedFitPermissions() {
-        // FIXME this isn't being invoked and causing the accountpiccker dialog to appear or is it?
-        googleFitAPIHelper.connect();
-    }
 }

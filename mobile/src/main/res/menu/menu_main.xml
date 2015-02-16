@@ -2,13 +2,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools" tools:context=".MainActivity">
 
-    <item android:id="@+id/action_unregister_googlefitapi"
-        android:title="@string/action_unregister_googlefitapi"
-        android:orderInCategory="102"
-        app:showAsAction="never" />
-
     <item android:id="@+id/action_go_to_site"
         android:title="@string/action_go_to_site"
         android:orderInCategory="103"
+        app:showAsAction="never" />
+
+    <item android:id="@+id/action_settings"
+        android:title="@string/action_settings"
+        android:orderInCategory="104"
         app:showAsAction="never" />
 </menu>

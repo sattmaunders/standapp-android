@@ -1,0 +1,25 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="@string/pref_title_google_fit"
+        android:key="pref_title_google_fit">
+
+        <SwitchPreference
+            android:key="pref_key_step_recording"
+            android:title="@string/pref_title_step_recording"
+            android:defaultValue="false"
+            android:summary="@string/pref_summary_step_recording"/>
+
+        <SwitchPreference
+            android:key="pref_key_session_recording"
+            android:title="@string/pref_title_session_recording"
+            android:defaultValue="true"
+            android:summary="@string/pref_summary_session_recording"/>
+
+        <Preference
+            android:key="pref_key_disconnect_fit"
+            android:summary="@string/pref_summary_disconnect_fit"
+            android:title="@string/pref_title_disconnect_fit" />
+    </PreferenceCategory>
+
+</PreferenceScreen>
