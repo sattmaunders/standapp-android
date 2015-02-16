@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.Toolbar;
@@ -149,12 +150,24 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
+        if (id == R.id.action_go_to_site) {
+            return goToWebsite();
+        }
+
         if (id == R.id.action_unregister_googlefitapi) {
             return revokeGoogleFitPermissions();
         }
 
         return super.onOptionsItemSelected(item);
     }
+
+    private boolean goToWebsite() {
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        i.setData(Uri.parse(getString(R.string.chrome_ext_error_link)));
+        startActivity(i);
+        return true;
+    }
+
 
     private boolean revokeGoogleFitPermissions() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);

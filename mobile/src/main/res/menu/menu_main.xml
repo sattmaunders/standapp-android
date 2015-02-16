@@ -6,4 +6,9 @@
         android:title="@string/action_unregister_googlefitapi"
         android:orderInCategory="102"
         app:showAsAction="never" />
+
+    <item android:id="@+id/action_go_to_site"
+        android:title="@string/action_go_to_site"
+        android:orderInCategory="103"
+        app:showAsAction="never" />
 </menu>
