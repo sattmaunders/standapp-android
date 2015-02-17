@@ -253,8 +253,8 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
         // Customize tab appearance:
         tabs.setShouldExpand(true);
-        tabs.setIndicatorColor(getResources().getColor(R.color.extAccent));
-        tabs.setDividerColor(getResources().getColor(R.color.extHue1));
+        //tabs.setIndicatorColor(getResources().getColor(R.color.stepsTab));
+        //tabs.setDividerColor(getResources().getColor(R.color.stepsTab));
         // Bind the tabs to the ViewPager
         tabs.setViewPager(pager);
     }
@@ -436,6 +436,24 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     @Override
     public void onPageSelected(int position) {
         getSupportActionBar().setTitle(getResources().getStringArray(R.array.tabs_activity_graph)[position]);
+        switch (position) {
+            case 0:
+                tabs.setIndicatorColor(getResources().getColor(R.color.stepsTab));
+                tabs.setDividerColor(getResources().getColor(R.color.stepsTab));
+                break;
+            case 1:
+                tabs.setIndicatorColor(getResources().getColor(R.color.standingTab));
+                tabs.setDividerColor(getResources().getColor(R.color.standingTab));
+                break;
+            case 2:
+                tabs.setIndicatorColor(getResources().getColor(R.color.breaksTab));
+                tabs.setDividerColor(getResources().getColor(R.color.breaksTab));
+                break;
+            default:
+                tabs.setIndicatorColor(getResources().getColor(R.color.stepsTab));
+                tabs.setDividerColor(getResources().getColor(R.color.stepsTab));
+                break;
+        }
     }
 
     @Override

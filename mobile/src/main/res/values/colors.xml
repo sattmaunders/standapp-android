@@ -16,9 +16,23 @@
     <item name="PRESSED_STATE_COLOR_SECONDARY" type="color">#3d60695d</item>
     <item name="NORMAL_STATE_COLOR_SECONDARY" type="color">#6460695d</item>
 
+    <!-- Pie chart colours -->
     <item name="graphGreen" type="color">#2ecc71</item>
     <item name="graphBlue" type="color">#2196f3</item>
+    <!-- Line graph colours - not currently implemented @JS request -->
+    <item name="graphBest" type="color">#2ecc71</item>
+    <item name="graphPrevious" type="color">#3498db</item>
+    <item name="graphCurrent" type="color">#ec407a</item>
+    <!-- Colours for tabs -->
+    <item name="stepsTab" type="color">#2196f3</item>
+    <item name="standingTab" type="color">#4caf50</item>
+    <item name="breaksTab" type="color">#ef6c00</item>
 
+    <!-- some white-ish colour pulled from ext css
+    <item name="graph2" type="color">#ecf0f1</item>
+    -->
+
+    <!-- Colours from extension -->
     <item name="extAccent" type="color">#e91e63</item>
     <item name="extHue2" type="color">#e3f2fd</item>
     <item name="extHue1" type="color">#1976d2</item>
