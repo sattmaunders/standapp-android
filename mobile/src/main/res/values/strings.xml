@@ -47,4 +47,10 @@
     <string name="ok">OK</string>
     <string name="dialog_active_subs_disclaimer">You may remove this data at anytime time using the Google Fit app.</string>
 
+    <string-array name="tabs_activity_graph">
+        <item>Steps</item>
+        <item>Standing</item>
+        <item>Breaks</item>
+    </string-array>
+
 </resources>

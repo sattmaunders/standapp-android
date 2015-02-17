@@ -61,7 +61,7 @@ import butterknife.InjectView;
              * onRegisterSuccess/onAlreadyRegistered (*success*)
  *
  */
-public class MainActivity extends StandAppBaseActionBarActivity implements GCMHelperListener, UserInfoListener, OnFragmentCreatedListener {
+public class MainActivity extends StandAppBaseActionBarActivity implements GCMHelperListener, UserInfoListener, OnFragmentCreatedListener, ViewPager.OnPageChangeListener {
 
     // [START auth_variable_references]
     private static final int REQUEST_OAUTH = 1;
@@ -73,6 +73,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
      */
     private static final String AUTH_PENDING = "auth_state_pending";
     public static final String INTENT_PARAM_USER_EMAIL = "USER_EMAIL";
+    private static final String SELECTED_TAB_INDEX = "SELECTED_TAB_INDEX";
     private boolean authInProgress = false;
 
     @InjectView(R.id.tabs)
@@ -117,11 +118,18 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
         userInfoMediator.registerUserInfoListener(this);
 
+        tabs.setOnPageChangeListener(this);
+
+
         pager.setCurrentItem(1);
         pager.setOffscreenPageLimit(2); //never unload fragments, there's only 3 anyways
 
+
         if (savedInstanceState != null) {
             authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
+            this.onPageSelected(savedInstanceState.getInt(SELECTED_TAB_INDEX));
+        } else {
+            this.onPageSelected(0);
         }
         googleFitAPIHelper.buildFitnessClient(connectionCallbacks, onConnectionFailedListener);
         // Connect to the Fitness API
@@ -133,7 +141,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle(null);
-        getSupportActionBar().setLogo(R.drawable.sa_ic_actionbaricon);
+        getSupportActionBar().setLogo(R.drawable.sa_ic_applauncher);
     }
 
     @Override
@@ -179,16 +187,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             Log.i(LogConstants.LOG_ID, "Google Fit connected");
 
             if (!preferenceAccess.getUserAccount().isEmpty()){
-                // Initialize the ViewPager and set an adapter
-                pager.setAdapter(new PagerAdapter(getSupportFragmentManager()));
-
-                // Customize tab appearance:
-                tabs.setShouldExpand(true);
-                tabs.setIndicatorColor(getResources().getColor(R.color.extAccent));
-                tabs.setDividerColor(getResources().getColor(R.color.extHue1));
-                // Bind the tabs to the ViewPager
-                tabs.setViewPager(pager);
-
+                initFragments();
                 // This will trigger onFragmentCreated
             }
         }
@@ -204,6 +203,18 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             }
         }
     };
+
+    private void initFragments() {
+        // Initialize the ViewPager and set an adapter
+        pager.setAdapter(new PagerAdapter(getSupportFragmentManager()));
+
+        // Customize tab appearance:
+        tabs.setShouldExpand(true);
+        tabs.setIndicatorColor(getResources().getColor(R.color.extAccent));
+        tabs.setDividerColor(getResources().getColor(R.color.extHue1));
+        // Bind the tabs to the ViewPager
+        tabs.setViewPager(pager);
+    }
 
     private GoogleApiClient.OnConnectionFailedListener onConnectionFailedListener = new GoogleApiClient.OnConnectionFailedListener() {
         @Override
@@ -269,6 +280,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(AUTH_PENDING, authInProgress);
+        outState.putInt(SELECTED_TAB_INDEX, pager.getCurrentItem());
     }
 
     @Override
@@ -372,4 +384,17 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         }
     }
 
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+        getSupportActionBar().setTitle(getResources().getStringArray(R.array.tabs_activity_graph)[position]);
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+    }
 }
