@@ -16,6 +16,8 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.utils.ValueFormatter;
+import com.github.mikephil.charting.utils.YLabels;
 import com.standapp.R;
 import com.standapp.backend.UserInfoListener;
 import com.standapp.backend.UserInfoMediator;
@@ -23,9 +25,12 @@ import com.standapp.common.BaseActionBarFragment;
 import com.standapp.util.User;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Locale;
 
 import javax.inject.Inject;
 /**
@@ -201,7 +206,7 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         set.setCircleSize(4f);
         set.setFillAlpha(65);
         set.setFillColor(colorBest);
-        set.setDrawCubic(true);
+        //set.setDrawCubic(true);
         set.setDrawCircles(false);
         //set.setDrawFilled(true);
 
@@ -217,7 +222,7 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         set1.setCircleSize(4f);
         set1.setFillAlpha(65);
         set1.setFillColor(colorPrevious);
-        set1.setDrawCubic(true);
+        //set1.setDrawCubic(true);
         set1.setDrawCircles(false);
         //set1.setDrawFilled(true);
 
@@ -233,7 +238,7 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         set2.setCircleSize(4f);
         set2.setFillAlpha(65);
         set2.setFillColor(colorCurrent);
-        set2.setDrawCubic(true);
+        //set2.setDrawCubic(true);
         set2.setDrawCircles(false); //draw circles for each point of data
         //set2.setDrawFilled(true); //fills underneath line
 
@@ -255,7 +260,7 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         //Set y bounds of chart - lines get cut off with cubic stuff without this
         //Weird behaviour - needs to be set to -1000 to prevent line from being cut off, but makes
         //other charts look weird, especially if they have zero values
-        chartTwo.setYRange(-1000,(chartTwo.getYMax()+ 1000),false);
+        //chartTwo.setYRange(-1000,(chartTwo.getYMax()+ 1000),false);
 
         chartTwo.setValueTextColor(Color.BLACK);
         //chartTwo.setDescription("Week summary");
@@ -280,6 +285,21 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         chartTwo.setDrawYValues(false);
         chartTwo.setDrawBorder(false);
         //chartTwo.setDrawXLabels(false);
+        ValueFormatter valueFormatter = new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float v) {
+                DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance(Locale.US);
+                formatter.applyPattern("##,###");
+                DecimalFormatSymbols symbols = formatter.getDecimalFormatSymbols();
+                symbols.setGroupingSeparator(',');
+                formatter.setDecimalFormatSymbols(symbols);
+
+                return formatter.format(v);
+            }
+        };
+        YLabels yLabels = chartTwo.getYLabels();
+        yLabels.setFormatter(valueFormatter);
+        if (position == 1) { yLabels.setDrawTopYLabelEntry(false); }
 
         chartTwo.invalidate();
         //chartTwo.animateX(2500); //fills values in from left to right
@@ -401,6 +421,14 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         DecimalFormat df = new DecimalFormat("#.##");
         float displayPercetage = ((float)curDay / (float)dayGoal) * 100;
         chartOne.setCenterText(String.valueOf(df.format(displayPercetage)) + "%");
+
+        chartOne.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float v) {
+                DecimalFormat df = new DecimalFormat("####");
+                return df.format(v);
+            }
+        });
 
         chartOne.setDrawXValues(false);
         chartOne.setTouchEnabled(false);
