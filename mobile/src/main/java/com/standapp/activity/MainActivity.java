@@ -19,6 +19,11 @@ import com.astuetz.PagerSlidingTabStrip;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.fitness.FitnessStatusCodes;
+import com.google.android.gms.fitness.data.DataType;
 import com.standapp.R;
 import com.standapp.activity.common.StandAppBaseActionBarActivity;
 import com.standapp.activity.error.ChromeExtErrorActivity;
@@ -41,25 +46,23 @@ import javax.inject.Inject;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
-/***
- *
+/**
  * Auth flow:
- *
+ * <p/>
  * .onStart --> googleFitAPIHelper.connect(); -> onFailure (start resolutions) || onConnect (*success*)
- *
+ * <p/>
  * .onResume -> userHelper.openChooseAccountDialog(this); ->
- *              onActivityResult ->
- *              userHelper.refreshUser(userAccount) ->
- *              onUserRefreshed ->
- *              gcmHelper.init(this, user.get_id()); ->
- *              onRegisterSuccess/onAlreadyRegistered (*success*)
- *
+ * onActivityResult ->
+ * userHelper.refreshUser(userAccount) ->
+ * onUserRefreshed ->
+ * gcmHelper.init(this, user.get_id()); ->
+ * onRegisterSuccess/onAlreadyRegistered (*success*)
+ * <p/>
  * .onFragmentCreated ->
-             * userHelper.refreshUser(userAccount) ->
-             * onUserRefreshed ->
-             * gcmHelper.init(this, user.get_id()); ->
-             * onRegisterSuccess/onAlreadyRegistered (*success*)
- *
+ * userHelper.refreshUser(userAccount) ->
+ * onUserRefreshed ->
+ * gcmHelper.init(this, user.get_id()); ->
+ * onRegisterSuccess/onAlreadyRegistered (*success*)
  */
 public class MainActivity extends StandAppBaseActionBarActivity implements GCMHelperListener, UserInfoListener, OnFragmentCreatedListener, ViewPager.OnPageChangeListener {
 
@@ -108,6 +111,8 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
     @Inject
     PreferenceAccess preferenceAccess;
+
+    private int numAsyncSuccessfullCallbacks = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -186,9 +191,10 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
         public void onConnected(Bundle bundle) {
             Log.i(LogConstants.LOG_ID, "Google Fit connected");
 
-            if (!preferenceAccess.getUserAccount().isEmpty()){
+            if (!preferenceAccess.getUserAccount().isEmpty()) {
                 initFragments();
                 // This will trigger onFragmentCreated
+                subscribeToStepsIfFirstTime();
             }
         }
 
@@ -203,6 +209,43 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             }
         }
     };
+
+    private void subscribeToStepsIfFirstTime() {
+        if (preferenceAccess.isFirstTime()) {
+            Log.w(LogConstants.LOG_ID, "First time loading app, going to subscribe");
+            preferenceAccess.updateFirstTime(false);
+            numAsyncSuccessfullCallbacks = 0;
+            for (DataType dataType : SettingsActivity.SUBSCRIBED_DATA_TYPES) {
+                subscribe(dataType);
+            }
+        } else {
+            Log.i(LogConstants.LOG_ID, "Not the first time this app was loaded");
+        }
+    }
+
+    private void subscribe(final DataType dataType) {
+        PendingResult<Status> res = googleFitAPIHelper.subscribe(dataType);
+        res.setResultCallback(new ResultCallback<Status>() {
+            @Override
+            public void onResult(Status status) {
+                String msg = "";
+                if (status.isSuccess()) {
+                    numAsyncSuccessfullCallbacks++;
+                    if (status.getStatusCode() == FitnessStatusCodes.SUCCESS_ALREADY_SUBSCRIBED) {
+                        msg = "Already sub to " + dataType.getName();
+                    } else {
+                        msg = "Successfully subscribed! " + dataType.getName();
+                    }
+                } else {
+                    msg = "There was a problem subscribing." + dataType.getName();
+                }
+                Log.i(LogConstants.LOG_ID, msg);
+                if (numAsyncSuccessfullCallbacks == SettingsActivity.SUBSCRIBED_DATA_TYPES.length) {
+                    Toast.makeText(MainActivity.this, MainActivity.this.getString(R.string.toast_subscribed_succes), Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
 
     private void initFragments() {
         // Initialize the ViewPager and set an adapter
@@ -379,7 +422,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
     public void onFragmentCreated() {
         // We don't want every child fragment to fetch user data all the time, just do it once and
         String userAccount = preferenceAccess.getUserAccount();
-        if (!userAccount.isEmpty() && userInfo.getUser() == null){
+        if (!userAccount.isEmpty() && userInfo.getUser() == null) {
             progressBar.setVisibility(View.VISIBLE);
             userHelper.refreshUser(userAccount);
         }

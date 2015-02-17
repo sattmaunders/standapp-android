@@ -56,7 +56,7 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
     private int numAsyncSuccessfullCallbacks = 0;
 
 
-    private static final DataType[] SUBSCRIBED_DATA_TYPES = new DataType[] {DataType.TYPE_STEP_COUNT_CUMULATIVE, DataType.TYPE_STEP_COUNT_DELTA, DataType.TYPE_LOCATION_SAMPLE};
+    public static final DataType[] SUBSCRIBED_DATA_TYPES = new DataType[] {DataType.TYPE_STEP_COUNT_CUMULATIVE, DataType.TYPE_STEP_COUNT_DELTA, DataType.TYPE_LOCATION_SAMPLE};
 
     @Inject
     GoogleFitAPIHelper googleFitAPIHelper;

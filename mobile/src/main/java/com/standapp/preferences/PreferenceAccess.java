@@ -22,6 +22,7 @@ public class PreferenceAccess {
     private static final String PROPERTY_USER_ACCOUNT = "userAccount";
     private static final String PROPERTY_USER_ID = "userId";
     private static final String PROPERTY_CONFIRM_BREAK = "askForConfirmationBeforeWorkout";
+    private static final String PROPERTY_FIRST_TIME_APP_INSTALLED = "firstTimeAppInstalled";
 
     private Context context;
 
@@ -126,5 +127,15 @@ public class PreferenceAccess {
 
     public boolean isConfirmBreak() {
         return getSharedPreferences().getBoolean(PROPERTY_CONFIRM_BREAK, false);
+    }
+
+    public boolean isFirstTime() {
+        return getSharedPreferences().getBoolean(PROPERTY_FIRST_TIME_APP_INSTALLED, true);
+    }
+
+    public void updateFirstTime(boolean b) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putBoolean(PROPERTY_FIRST_TIME_APP_INSTALLED, b);
+        editor.apply();
     }
 }
