@@ -3,6 +3,8 @@ package com.standapp.activity;
 import android.accounts.AccountManager;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
@@ -440,18 +442,22 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             case 0:
                 tabs.setIndicatorColor(getResources().getColor(R.color.stepsTab));
                 tabs.setDividerColor(getResources().getColor(R.color.stepsTab));
+                getSupportActionBar().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.stepsTab)));
                 break;
             case 1:
                 tabs.setIndicatorColor(getResources().getColor(R.color.standingTab));
                 tabs.setDividerColor(getResources().getColor(R.color.standingTab));
+                getSupportActionBar().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.standingTab)));
                 break;
             case 2:
                 tabs.setIndicatorColor(getResources().getColor(R.color.breaksTab));
                 tabs.setDividerColor(getResources().getColor(R.color.breaksTab));
+                getSupportActionBar().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.breaksTab)));
                 break;
             default:
                 tabs.setIndicatorColor(getResources().getColor(R.color.stepsTab));
                 tabs.setDividerColor(getResources().getColor(R.color.stepsTab));
+                getSupportActionBar().setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.stepsTab)));
                 break;
         }
     }
