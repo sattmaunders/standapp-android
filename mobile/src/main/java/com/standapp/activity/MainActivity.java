@@ -332,6 +332,7 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
 
         logMsg("user exists " + user.toString());
         preferenceAccess.updateUserId(user.get_id());
+        preferenceAccess.updateConfirmBreak(user.isConfirmBreak());
         progressBar.setVisibility(View.GONE);
 
         if (googlePlayServicesHelper.checkPlayServices(this)) {

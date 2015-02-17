@@ -46,6 +46,9 @@
     <string name="dialog_title_active_subscriptions">Active Subscriptions</string>
     <string name="ok">OK</string>
     <string name="dialog_active_subs_disclaimer">You may remove this data at anytime time using the Google Fit app.</string>
+    <string name="notif_start_workout">This notification will clear when you complete your break.</string>
+    <string name="notif_start_workout_title">Take a break!</string>
+   
 
     <string-array name="tabs_activity_graph">
         <item>Steps</item>

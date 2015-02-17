@@ -7,6 +7,11 @@ import org.json.JSONArray;
  */
 public class User {
 
+    public boolean isConfirmBreak() {
+        return confirmBreak;
+    }
+
+
     private boolean confirmBreak = false;
     private int breakFreq = 5;
     private int breakDur = 5;
@@ -108,4 +113,5 @@ public class User {
     public void setEmail(String email) {
         this.email = email;
     }
+
 }

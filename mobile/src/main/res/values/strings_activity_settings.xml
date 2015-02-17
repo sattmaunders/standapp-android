@@ -9,9 +9,20 @@
     <string name="pref_title_session_recording">Track walk sessions</string>
     <string name="pref_summary_session_recording">Allow Google fit to record walking sessions, when you\'re on a workout using the Standroid Chrome Extension.</string>
 
-    <string name="pref_summary_disconnect_fit">You are logged in as %1$s</string>
+    <string name="pref_summary_disconnect_fit">You are logged in as %1$s.</string>
     <string name="pref_summary_disconnect_fit_no_user">You are not logged in. Restart the app to login as a different user.</string>
 
     <string name="pref_summary_active_subscriptions">View what type of data is stored to Google Fit.</string>
     <string name="pref_title_active_subscriptions">Active Subscriptions</string>
+
+    <string name="pref_title_notifications">Notifications</string>
+    <string name="pref_summary_sound" />
+    <string name="pref_title_sound">Sound</string>
+    <string name="pref_summary_vibrate" />
+    <string name="pref_title_vibrate">Vibrate</string>
+    <string name="pref_summary_light"></string>
+    <string name="pref_title_light">Light</string>
+    <string name="pref_start_workout">Workout notification</string>
+    <string name="pref_summary_start_workout">Notify before your workout begins.</string>
+    <string name="pref_summary_start_workout_warning">Warning: Appears only if confirm break is unchecked in the Standroid Chrome Extension.</string>
 </resources>

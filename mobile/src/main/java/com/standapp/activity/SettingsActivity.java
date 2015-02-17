@@ -35,6 +35,11 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
     public static final String pref_key_disconnect_fit = "pref_key_disconnect_fit";
     public static final String pref_key_active_subscriptions = "pref_key_active_subscriptions";
 
+    public static final String pref_key_start_workout_notification = "pref_key_start_workout_notification";
+    public static final String pref_key_vibrate = "pref_key_vibrate";
+    public static final String pref_key_sound = "pref_key_sound";
+    public static final String pref_key_light = "pref_key_light";
+
 
     // MAKE ENUMS TODO
     private static final int REVOKE_GOOGLE_FIT_PERMISSIONS = 0;
@@ -61,6 +66,7 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
 
     private Preference prefViewActiveSubscriptions;
     private Preference prefDisconnectFit = null;
+    private Preference prefWorkoutNotifications = null;
 
 
     @Override
@@ -70,10 +76,19 @@ public class SettingsActivity extends StandAppBasePreferenceActivity implements 
 
         prefDisconnectFit = (Preference) findPreference(pref_key_disconnect_fit);
         prefViewActiveSubscriptions = (Preference) findPreference(pref_key_active_subscriptions);
+        prefWorkoutNotifications = (Preference) findPreference(pref_key_start_workout_notification);
         setClickListeners();
 
         googleFitAPIHelper.buildFitnessClient(connectionCallbacks, onConnectionFailedListener);
         refreshPrefDisconnectFitSummary();
+        refreshPrefWorkoutNotifications();
+    }
+
+    private void refreshPrefWorkoutNotifications() {
+        boolean confirmBreak = preferenceAccess.isConfirmBreak();
+        if (confirmBreak) {
+            prefWorkoutNotifications.setSummary(getString(R.string.pref_summary_start_workout_warning));
+        }
     }
 
     @Override

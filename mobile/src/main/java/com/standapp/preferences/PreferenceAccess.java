@@ -21,6 +21,7 @@ public class PreferenceAccess {
     private static final String PROPERTY_LAST_FIT_SESSION_ID = "lastFitSessionId";
     private static final String PROPERTY_USER_ACCOUNT = "userAccount";
     private static final String PROPERTY_USER_ID = "userId";
+    private static final String PROPERTY_CONFIRM_BREAK = "askForConfirmationBeforeWorkout";
 
     private Context context;
 
@@ -90,7 +91,12 @@ public class PreferenceAccess {
         SharedPreferences.Editor editor = getSharedPreferences().edit();
         editor.putBoolean(SettingsActivity.pref_key_step_recording, b);
         return editor.commit();
+    }
 
+    public void updateConfirmBreak(boolean b) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putBoolean(PROPERTY_CONFIRM_BREAK, b);
+        editor.apply();
     }
 
     public boolean getStepRecording() {
@@ -99,5 +105,26 @@ public class PreferenceAccess {
 
     public boolean getSessionRecording() {
         return getSharedPreferences().getBoolean(SettingsActivity.pref_key_session_recording, true);
+    }
+
+    public boolean getSound() {
+        return getSharedPreferences().getBoolean(SettingsActivity.pref_key_sound, true);
+    }
+
+    public boolean getVibrate() {
+        return getSharedPreferences().getBoolean(SettingsActivity.pref_key_vibrate, true);
+    }
+
+    public boolean getLight() {
+        return getSharedPreferences().getBoolean(SettingsActivity.pref_key_light, false);
+    }
+
+    public boolean isStartWorkoutNotificationEnabled() {
+        return getSharedPreferences().getBoolean(SettingsActivity.pref_key_start_workout_notification, true)
+                && !isConfirmBreak();
+    }
+
+    public boolean isConfirmBreak() {
+        return getSharedPreferences().getBoolean(PROPERTY_CONFIRM_BREAK, false);
     }
 }

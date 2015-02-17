@@ -6,6 +6,9 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -47,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 public class GcmIntentService extends IntentService {
     public static final int NOTIFICATION_OAUTH_RES_ID = 1;
     public static final int NOTIFICATION_SESSION_ID = 1872;
+    private static final int NOTIFICATION_START_WORKOUT_ID = 137;
 
     // Dependencies not injected :(  // TODO should use DI dagger injection.
     private final PreferenceAccess preferenceAccess;
@@ -108,7 +112,7 @@ public class GcmIntentService extends IntentService {
         }
 
         // TODO confirm release lock doesn't mess up async calls
-        if (typeOfWork == null){
+        if (typeOfWork == null) {
             Log.i(LogConstants.LOG_ID, "Never set a type of work, so just releasing the lock");
             releaseWakeLock();
         }
@@ -166,13 +170,50 @@ public class GcmIntentService extends IntentService {
     }
 
     private void startWorkout() {
+        createStartWorkoutNotification();
         createSession();
         createRecordingNotification();
     }
 
+    private void createStartWorkoutNotification() {
+        if (preferenceAccess.isStartWorkoutNotificationEnabled()) {
+            String msg = getString(R.string.notif_start_workout);
+            NotificationCompat.Builder mBuilder =
+                    new NotificationCompat.Builder(this)
+                            .setSmallIcon(android.R.drawable.ic_popup_reminder)
+                            .setContentTitle(getResources().getString(R.string.notif_start_workout_title))
+                            .setStyle(new NotificationCompat.BigTextStyle().bigText(msg))
+                            .setContentText(msg);
+
+            if (preferenceAccess.getSound()) {
+                Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                mBuilder.setSound(alarmSound);
+            }
+
+            if (preferenceAccess.getVibrate()) {
+                mBuilder.setVibrate(new long[]{1000, 1000, 1000});
+            }
+
+            if (preferenceAccess.getLight()) {
+                mBuilder.setLights(Color.BLUE, 3000, 3000);
+            }
+
+//        PendingIntent endWorkoutPendingIntent = PendingIntent.getService(this, 0, new Intent(this, GcmIntentService.class), PendingIntent.FLAG_CANCEL_CURRENT);
+//        mBuilder.setContentIntent(endWorkoutPendingIntent);
+            mNotificationManager.notify(NOTIFICATION_START_WORKOUT_ID, mBuilder.build());
+        }
+
+
+    }
+
     private void endWorkout() {
-        endSession();
         clearRecordingNotification();
+        clearConfirmBreakNotification();
+        endSession();
+    }
+
+    private void clearConfirmBreakNotification() {
+        mNotificationManager.cancel(NOTIFICATION_START_WORKOUT_ID);
     }
 
     private void endSessionAndCreateNewOne(String oldSessionId) {
