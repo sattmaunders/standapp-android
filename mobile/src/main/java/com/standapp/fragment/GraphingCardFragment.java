@@ -120,6 +120,8 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
 
     private void setDataLine(User user) {
 
+        graphTwo.removeAllViews();
+
         chartTwo = new LineChart(getActivity());
 /*
         boolean confirmBreak, int breakFreq, int breakDur, int workStart, int workEnd,
@@ -308,6 +310,8 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
     }
 
     private void setDataPie(User user) {
+
+        graphOne.removeAllViews();
 
         chartOne = new PieChart(getActivity());
 
