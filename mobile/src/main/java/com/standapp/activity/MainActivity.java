@@ -164,6 +164,10 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             return goToWebsite();
         }
 
+        if (id == R.id.action_refresh) {
+            return refreshUser();
+        }
+
         if (id == R.id.action_settings) {
             return goToSettings();
         }
@@ -426,6 +430,15 @@ public class MainActivity extends StandAppBaseActionBarActivity implements GCMHe
             progressBar.setVisibility(View.VISIBLE);
             userHelper.refreshUser(userAccount);
         }
+    }
+
+    private boolean refreshUser() {
+        String userAccount = preferenceAccess.getUserAccount();
+        if (!userAccount.isEmpty()) {
+            progressBar.setVisibility(View.VISIBLE);
+            userHelper.refreshUser(userAccount);
+        }
+        return true;
     }
 
     @Override

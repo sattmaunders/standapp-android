@@ -417,6 +417,10 @@ public class GraphingCardFragment extends BaseActionBarFragment implements UserI
         this.user = user;
         setDataLine(user);
         setDataPie(user);
+        this.graphOne.invalidate();
+        this.graphTwo.invalidate();
+        this.chartOne.invalidate();
+        this.chartTwo.invalidate();
     }
 
     @Override
