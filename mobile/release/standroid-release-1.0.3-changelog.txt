@@ -1,0 +1,5 @@
+- Notify when break starts (only if confirm break is disabled on Chrome Extension)
+- Toggle vibration, light, sound for notifications
+- Enabled step detect by default when app starts up for the first time
+- Fixed logo and toolbar styles
+- Display titles in toolbar based on tab
